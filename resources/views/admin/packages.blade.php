@@ -75,27 +75,36 @@
                 </div>
                 
                 <!-- Package Item 1 -->
-                <div class="p-3 bg-light rounded-3 mb-2 border border-light-subtle d-flex justify-content-between align-items-start">
-                    <div style="max-width: 70%;">
-                        <div class="d-flex align-items-center gap-1 mb-1">
-                            <h6 class="fw-bold mb-0 text-dark small text-truncate">Cebu Historical</h6>
-                            <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5" style="font-size: 9px;">Popular</span>
+                @forEach($packages as $package)
+                    <div class="p-3 bg-light rounded-3 mb-2 border border-light-subtle d-flex justify-content-between align-items-start">
+                        <div style="max-width: 70%;">
+                            <div class="d-flex align-items-center gap-1 mb-1">
+                                <h6 class="fw-bold mb-0 text-dark small text-truncate">{{$package->name}}</h6>
+                                @if($package->type == 'popular')
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5" style="font-size: 9px;">🔥 Popular</span>
+                                @elseif($package->type == 'best_combo')
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0.5" style="font-size: 9px;">⭐ Best Combo</span>
+                                @elseif($package->type == 'trending')
+                                    <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-2 py-0.5" style="font-size: 9px;">⚡ Trending</span>
+                                @elseif($package->type == 'budget')
+                                    <span class="badge bg-info-subtle text-info-emphasis rounded-pill px-2 py-0.5" style="font-size: 9px;">💰 Budget Friendly</span>
+                                @endif</div>
+                            <span class="text-muted font-monospace d-block" style="font-size: 11px;">Base: ₱{{ $package->package_price }}</span>
+                            <span class="text-muted font-monospace d-block" style="font-size: 11px;">+₱{{ $package->perhead_price }}/head</span>
                         </div>
-                        <span class="text-muted font-monospace d-block" style="font-size: 11px;">Base: ₱1,500</span>
-                        <span class="text-muted font-monospace d-block" style="font-size: 11px;">+₱200/head (Max 15)</span>
+                        <div class="btn-group btn-group-sm shadow-sm">
+                            <button class="btn btn-white border text-secondary bg-white" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-white border text-danger bg-white" title="Delete"><i class="bi bi-trash3"></i></button>
+                        </div>
                     </div>
-                    <div class="btn-group btn-group-sm shadow-sm">
-                        <button class="btn btn-white border text-secondary bg-white" title="Edit"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn btn-white border text-danger bg-white" title="Delete"><i class="bi bi-trash3"></i></button>
-                    </div>
-                </div>
+                @endforeach
+                
 
                 <!-- Package Item 2 -->
-                <div class="p-3 bg-light rounded-3 mb-2 border border-light-subtle d-flex justify-content-between align-items-start">
+                {{-- <div class="p-3 bg-light rounded-3 mb-2 border border-light-subtle d-flex justify-content-between align-items-start">
                     <div style="max-width: 70%;">
                         <div class="d-flex align-items-center gap-1 mb-1">
                             <h6 class="fw-bold mb-0 text-dark small text-truncate">Highland Escape</h6>
-                            <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0.5" style="font-size: 9px;">Best Combo</span>
                         </div>
                         <span class="text-muted font-monospace d-block" style="font-size: 11px;">Base: ₱2,200</span>
                         <span class="text-muted font-monospace d-block" style="font-size: 11px;">+₱350/head (Max 10)</span>
@@ -104,7 +113,7 @@
                         <button class="btn btn-white border text-secondary bg-white" title="Edit"><i class="bi bi-pencil-square"></i></button>
                         <button class="btn btn-white border text-danger bg-white" title="Delete"><i class="bi bi-trash3"></i></button>
                     </div>
-                </div>
+                </div> --}}
             </div>
             
             <!-- COLUMN 2: Form Creator Panel -->
@@ -115,7 +124,7 @@
                 </div>
                 
                 <!-- Action target should route to your Laravel backend resource stack store method -->
-                <form id="packageForm" action="#" method="POST" enctype="multipart/form-data">
+                <form id="packageForm" action="{{ route('admin.store.package') }}" method="POST" enctype="multipart/form-data" >
                     <!-- Laravel CSRF Protection Field Token Container placeholder -->
                     <!-- <input type="hidden" name="_token" value="{{ csrf_token() }}"> -->
                     
@@ -143,21 +152,21 @@
                     <div class="row">
                         <div class="col-4 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Base Price</label>
-                            <input type="number" name="base_price" class="form-control rounded-3 form-control-sm" placeholder="₱1500" min="0" required>
+                            <input type="number" name="package_price" class="form-control rounded-3 form-control-sm" placeholder="₱1500" min="0" required>
                         </div>
                         <div class="col-4 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Price / Head</label>
-                            <input type="number" name="price_per_head" class="form-control rounded-3 form-control-sm" placeholder="₱200" min="0" required>
+                            <input type="number" name="perhead_price" class="form-control rounded-3 form-control-sm" placeholder="₱200" min="0" required>
                         </div>
                         <div class="col-4 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Pax Limit</label>
-                            <input type="number" name="pax_limit" class="form-control rounded-3 form-control-sm" placeholder="Max" min="1" required>
+                            <input type="number" name="pax" class="form-control rounded-3 form-control-sm" placeholder="Max" min="1" required>
                         </div>
                     </div>
 
                     <div class="mb-2">
                         <label class="form-label text-muted small fw-bold mb-1">Feature Banner Image</label>
-                        <input type="file" name="banner_image" class="form-control rounded-3 form-control-sm">
+                        <input type="file" name="image" class="form-control rounded-3 form-control-sm">
                     </div>
 
                     <div class="mb-3">

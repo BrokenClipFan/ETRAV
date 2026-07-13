@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('package', function (Blueprint $table) {
+        Schema::create('packages', function (Blueprint $table) {
             $table->id();
-            
+
             $table->string('name');
             $table->string('type');
             $table->integer('package_price');
             $table->integer('perhead_price');
             $table->integer('pax');
             $table->string('image_path');
-            $table->text('discription');
+            $table->text('description');
 
             $table->timestamps();
         });
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('package');
+        Schema::dropIfExists('packages');
     }
 };
