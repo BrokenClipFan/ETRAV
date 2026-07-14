@@ -27,6 +27,15 @@
             </div>
         </div>
 
+        <!-- Phone Number Field -->
+        <div class="mb-3">
+            <label for="phone" class="form-label text-muted small fw-bold mb-1">Phone Number</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-telephone"></i></span>
+                <input id="phone" type="tel" name="phone_number" class="form-control bg-light border-start-0" value="{{ old('phone') }}" placeholder="09123456789" required autocomplete="tel">
+            </div>
+        </div>
+
         <!-- Passwords Grid -->
         <div class="row">
             <div class="col-sm-6 mb-3">

@@ -3,28 +3,33 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\PlaceController;
+use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\BookingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::middleware('auth')->group(function() {
+    Route::get('/', [BookingController::class, 'index'])->name('home');
+    Route::post('/booking/store', [BookingController::class, 'store'])->name('booking.store');
+
+    Route::get('/bookings/', [BookingController::class, 'view'])->name('bookings.view');
+    Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings');
+    Route::post('/booking/{id}/update', [AdminBookingController::class, 'update'])->name('booking.update');
+    Route::post('/booking/{id}/update/completed', [AdminBookingController::class, 'markComplete'])->name('booking.update.complete');
+
     Route::get('/packages', [PackageController::class, 'index'])->name('packages');
     Route::post('/package/store', [PackageController::class, 'store'])->name('store.package');
     Route::put('/package/{id}/update/', [PackageController::class, 'update'])->name('package.update');
-    Route::delete('/package/{id}/delete/', [PackageController::class, 'destroy'])->name('package.destroy');
+    Route::delete('/package/{id}/delete/', [PackageController::class, 'destroy'])->name('package.destroy'); 
 
     Route::post('Place/store', [PlaceController::class, 'store'])->name('store.spot');
-
+    
     Route::get('statistic', function () {
         return view('statistic');
     });
-
-    Route::get('bookings', function () {
-        return view('bookings');
-    });
-
 });
 
 Route::get('/dashboard', function () {

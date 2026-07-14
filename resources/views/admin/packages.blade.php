@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Advanced Packages & Spots Management</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
@@ -92,24 +89,35 @@
 </head>
 <body class="bg-light">
 
-    <!-- NAVIGATION BAR -->
     <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom py-3" style="height: 65px;">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2" href="#">
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: 36px;" class="text-primary"><path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm2 32h-4v-4h4v4zm0-8h-4V12h4v16z" fill="currentColor"/></svg>
+                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: 36px;" class="text-primary">
+                    <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm2 32h-4v-4h4v4zm0-8h-4V12h4v16z" fill="currentColor"/>
+                </svg>
                 <span class="fs-5 fw-semibold tracking-wider">Admin Dashboard</span>
             </a>
-            <div class="ms-auto">
-                <span class="text-muted small fw-medium"><i class="bi bi-mouse-fill text-primary"></i> Left-Click Pins to Attach | Right-Click Map to Create Spot</span>
+
+            <div class="ms-auto d-flex align-items-center gap-4">
+                <div class="d-none d-lg-block">
+                    <span class="text-muted small fw-medium">
+                        <i class="bi bi-mouse-fill text-primary"></i> Left-Click Pins to Attach | Right-Click Map to Create Spot
+                    </span>
+                </div>
+
+                <div class="position-relative cursor-pointer" role="button" id="notificationDropdown" style="z-index: 1050;">
+                    <i class="bi bi-bell text-secondary fs-5 hover-text-dark"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span class="visually-hidden">New alerts</span>
+                    </span>
+                </div>
             </div>
         </div>
     </nav>
 
-    <!-- MAIN GRID CONTAINER -->
     <div class="container-fluid main-admin-wrapper">
         <div class="row h-100 g-0">
             
-            <!-- COLUMN 1: Active Packages Directory -->
             <div class="col-12 col-md-3 bg-white border-end h-100 scrollable-panel p-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold text-dark mb-0">Active Packages</h6>
@@ -126,14 +134,11 @@
                                 </div>
                                 <span class="text-muted font-monospace d-block" style="font-size: 11px;">Base: ₱{{ $package->package_price }}</span>
                             </div>
-                            <!-- Dynamic Button Action Group -->
                             <div class="btn-group btn-group-sm shadow-sm">
-                                <!-- Edit Button -->
                                 <button type="button" class="btn btn-white border text-secondary bg-white" title="Edit" 
                                         onclick="event.stopPropagation(); loadPackageToForm({{ json_encode($package) }})">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
-                                <!-- Delete Button -->
                                 <button type="button" class="btn btn-white border text-danger bg-white" title="Delete" 
                                         onclick="event.stopPropagation(); confirmDeletePackage({{ $package->id }}, '{{ addslashes($package->name) }}')">
                                     <i class="bi bi-trash3"></i>
@@ -144,7 +149,6 @@
                 </div>
             </div>
             
-            <!-- COLUMN 2: Form Creator Panel -->
             <div class="col-12 col-md-4 bg-white border-end h-100 scrollable-panel p-4">
                 <div class="mb-3">
                     <h5 class="fw-bold text-dark mb-1" id="formActionHeader">✨ Create Package</h5>
@@ -198,7 +202,6 @@
                         <textarea name="description" id="textareaDescription" class="form-control rounded-3 form-control-sm" rows="2" placeholder="Brief tour overview..."></textarea>
                     </div>
 
-                    <!-- Selected Spots Itinerary Queue Tracker Layout -->
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold d-flex justify-content-between align-items-center mb-2">
                             <span>📍 Attached Itinerary Pipeline</span>
@@ -210,12 +213,10 @@
                     </div>
 
                     <div class="d-flex gap-2 align-items-center mt-3">
-                        <!-- Secondary/Reset Action -->
                         <button type="button" id="formResetBtn" class="btn btn-light rounded-pill w-50 py-2 border text-secondary" style="font-size: 13px;" onclick="clearPackageForm()">
                             Clear Form
                         </button>
                         
-                        <!-- Primary Action (Create / Save Edited) -->
                         <button type="submit" id="formSubmitBtn" class="btn btn-primary rounded-pill w-50 py-2 fw-medium shadow-sm" style="font-size: 13px;">
                             Create Package
                         </button>
@@ -223,7 +224,6 @@
                 </form>
             </div>
 
-            <!-- COLUMN 3: Large Interactive Leaflet Map Grid Container -->
             <div class="col-12 col-md-5 col-lg-5 h-100 position-relative">
                 <div id="adminFullMap"></div>
             </div>
@@ -231,7 +231,6 @@
         </div>
     </div>
 
-    <!-- Dynamic Rich Add New Spot Form Structural Payload Component -->
     <form id="standaloneSpotForm" action="{{ route('admin.store.spot') }}" method="POST" enctype="multipart/form-data" class="d-none">
         @csrf
         <input type="text" name="name" id="hiddenSpotName">
@@ -247,12 +246,10 @@
         @method('DELETE')
     </form>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
             <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-body text-center p-4">
-                    <!-- Warning icon matching your current theme colors -->
                     <div class="text-danger mb-3">
                         <i class="bi bi-exclamation-octagon-fill" style="font-size: 3rem;"></i>
                     </div>
@@ -437,7 +434,7 @@
             activeItinerarySpots.push({
                 id: sourceMasterItem.id,
                 name: sourceMasterItem.name,
-                image_url: sourceMasterItem.image_path, // Maps DB image_path to front-end itinerary layout
+                image_url: sourceMasterItem.image_path, 
                 latitude: parseFloat(sourceMasterItem.latitude),
                 longitude: parseFloat(sourceMasterItem.longitude),
                 position: activeItinerarySpots.length + 1
@@ -532,10 +529,10 @@
             // DYNAMIC BUTTON CHANGE: Transform button state to Update Mode
             const submitBtn = document.getElementById('formSubmitBtn');
             submitBtn.innerText = "Save Edited Package";
-            submitBtn.className = "btn btn-success rounded-pill w-50 py-2 fw-medium shadow-sm"; // green for update
+            submitBtn.className = "btn btn-success rounded-pill w-50 py-2 fw-medium shadow-sm"; 
             
             const resetBtn = document.getElementById('formResetBtn');
-            resetBtn.innerText = "Create New"; // Change "Clear" to an explicit opt-out
+            resetBtn.innerText = "Create New"; 
             resetBtn.className = "btn btn-outline-primary rounded-pill w-50 py-2";
 
             // Process and map attached places
@@ -571,7 +568,7 @@
             }
         }
 
-        // FIXED: Completely resets all text, select inputs, dynamic routing overrides, and resets buttons to default Create State
+        // FIXED: Completely resets form states and fields back to Create state
         function clearPackageForm() {
             const formElement = document.getElementById('packageForm');
             if (formElement) {
@@ -599,14 +596,14 @@
             // Reset button display configurations back to default Create state
             const submitBtn = document.getElementById('formSubmitBtn');
             submitBtn.innerText = "Create Package";
-            submitBtn.className = "btn btn-primary rounded-pill w-50 py-2 fw-medium shadow-sm"; // blue
+            submitBtn.className = "btn btn-primary rounded-pill w-50 py-2 fw-medium shadow-sm"; 
             
             const resetBtn = document.getElementById('formResetBtn');
             resetBtn.innerText = "Clear Form";
             resetBtn.className = "btn btn-light rounded-pill w-50 py-2 border text-secondary";
         }
 
-        // DYNAMIC SUBMIT LISTENER: Formulates itinerary payloads and handles routing actions on submit event firing
+        // DYNAMIC SUBMIT LISTENER: Formulates itinerary payloads and handles routing actions
         document.getElementById('packageForm').addEventListener('submit', function(e) {
             const packageId = document.getElementById('formPackageId').value;
             const formElement = this;
