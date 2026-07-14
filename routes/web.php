@@ -9,20 +9,22 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/packages', [PackageController::class, 'index'])->name('packages');
+    Route::post('/package/store', [PackageController::class, 'store'])->name('store.package');
+    Route::put('/package/{id}/update/', [PackageController::class, 'update'])->name('package.update');
+    Route::delete('/package/{id}/delete/', [PackageController::class, 'destroy'])->name('package.destroy');
 
-Route::get('/admin/packages', [PackageController::class, 'index'])->name('admin.packages');
-Route::post('/admin/package/store', [PackageController::class, 'store'])->name('admin.store.package');
-Route::put('/admin/package/{id}/update/', [PackageController::class, 'update'])->name('admin.package.update');
-Route::delete('/admin/package/{id}/delete/', [PackageController::class, 'destroy'])->name('admin.package.destroy');
+    Route::post('Place/store', [PlaceController::class, 'store'])->name('store.spot');
 
-Route::post('/admin/Place/store', [PlaceController::class, 'store'])->name('admin.store.spot');
+    Route::get('statistic', function () {
+        return view('statistic');
+    });
 
-Route::get('/admin/statistic', function () {
-    return view('admin.statistic');
-});
+    Route::get('bookings', function () {
+        return view('bookings');
+    });
 
-Route::get('/admin/bookings', function () {
-    return view('admin.bookings');
 });
 
 Route::get('/dashboard', function () {
