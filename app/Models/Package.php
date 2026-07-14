@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PackagePlace;
 
 class Package extends Model
 {
@@ -15,4 +16,12 @@ class Package extends Model
         'image_path',
         'description'
     ];
+
+    public function places()
+    {
+        return $this->belongsToMany(Place::class, 'package_places')
+                    ->withPivot('position')
+                    ->withTimestamps();
+    }
+    
 }

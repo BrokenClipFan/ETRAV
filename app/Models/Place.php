@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Models\PackagePlace;
+
+class Place extends Model
+{
+    protected $fillable = [
+        'name',
+        'price',
+        'description',
+        'image_path',
+        'latitude',
+        'longitude'
+    ];
+
+    public function packages() {
+        return $this->hasMany(PackagePlace::class, 'place_id');
+    }
+}
