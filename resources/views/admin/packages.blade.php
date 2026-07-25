@@ -183,12 +183,12 @@
                             <input type="number" name="package_price" id="inputPackagePrice" class="form-control rounded-3 form-control-sm" min="0" required>
                         </div>
                         <div class="col-4 mb-2">
-                            <label class="form-label text-muted small fw-bold mb-1">Price / Head</label>
-                            <input type="number" name="perhead_price" id="inputPerHeadPrice" class="form-control rounded-3 form-control-sm" min="0" required>
-                        </div>
-                        <div class="col-4 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Pax Limit</label>
                             <input type="number" name="pax" id="inputPax" class="form-control rounded-3 form-control-sm" min="1" required>
+                        </div>
+                        <div class="col-4 mb-2">
+                            <label class="form-label text-muted small fw-bold mb-1">Price / Head</label>
+                            <input type="number" name="perhead_price" id="inputPerHeadPrice" class="form-control rounded-3 form-control-sm" min="0" required disabled>
                         </div>
                     </div>
 
@@ -665,6 +665,20 @@
             // Bind the Laravel destroy route using your dynamic pattern
             deleteForm.action = `{{ route('admin.package.destroy', ':id') }}`.replace(':id', packageIdToDelete);
             deleteForm.submit();
+        }
+
+        document.getElementById('inputPax').addEventListener('input', (e) => updatePriceHead());
+        document.getElementById('inputPackagePrice').addEventListener('input', (e) => updatePriceHead());
+        function updatePriceHead() {
+            const pax = document.getElementById('inputPax').value || 0;
+            const basePrice = document.getElementById('inputPackagePrice').value || 0;
+            const perHeadInput = document.getElementById('inputPerHeadPrice');
+            
+            if (pax > 0) {
+                perHeadInput.value = (basePrice / pax).toFixed(2); // Rounds to 2 decimal places
+            } else {
+                perHeadInput.value = '';
+            }
         }
     </script>
     @include('layouts.notification')
