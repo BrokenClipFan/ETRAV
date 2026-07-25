@@ -16,7 +16,9 @@ class Booking extends Model
         'longitude',
         'pax',
         'total_price',
+        'head_price',
         'deposit_amount',
+        'joiners',
         'status',
         'notify',
     ];

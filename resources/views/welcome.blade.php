@@ -109,14 +109,12 @@
             pointer-events: none;
         }
         
-        /* Remove arrows from number inputs for a cleaner look */
         input[type=number].no-spinners::-webkit-inner-spin-button, 
         input[type=number].no-spinners::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
             margin: 0; 
         }
 
-        /* --- CUSTOM LARGER NOTIFICATION DOTS --- */
         .notify-dot-absolute {
             position: absolute;
             top: -2px;
@@ -179,11 +177,16 @@
                 <div class="mb-4 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="fw-bold mb-1 text-dark">Cebu Tour Packages</h5>
-                        <p class="text-muted small mb-0">Select a package to view its route or click map pins to filter.</p>
+                        <p class="text-muted small mb-0">Select a package or build a custom route.</p>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill d-none" id="resetFilterBtn" onclick="resetFilters()">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                    </button>
+                    <div class="d-flex gap-1.5 align-items-center">
+                        <button class="btn btn-sm btn-primary rounded-pill px-2.5 py-1 fw-medium" onclick="openCustomBookingModal()" style="font-size: 11px;">
+                            <i class="bi bi-plus-lg me-1"></i> Custom Tour
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill d-none px-2 py-1" id="resetFilterBtn" onclick="resetFilters()" style="font-size: 11px;">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </button>
+                    </div>
                 </div>
 
                 <div id="packagesContainer">
@@ -252,7 +255,7 @@
                                             <i class="bi bi-map"></i> View Route
                                         </button>
                                         <button class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-medium" 
-                                                onclick="openBookingModal({{ json_encode($package) }})" 
+                                                onclick='openBookingModal(@json($package))' 
                                                 style="font-size: 11px;">
                                             Book Now
                                         </button>
@@ -273,7 +276,7 @@
             <div class="col-12 col-md-8 p-3 bg-light position-relative d-none d-md-block">
                 <div class="map-container">
                     <div id="mapPickerInstruction" class="alert alert-warning py-2 px-3 align-items-center gap-2 d-none rounded-pill border-0" role="alert">
-                        <i class="bi bi-pin-map-fill text-danger animate-bounce"></i>
+                        <i class="bi bi-pin-map-fill text-danger"></i>
                         <span class="small fw-semibold text-dark">Click anywhere on the map or drag the gold pin to set your Pickup Point!</span>
                     </div>
 
@@ -304,68 +307,157 @@
                 </div>
                 <form action="{{ route('booking.store') }}" method="POST" id="bookingForm">
                     @csrf
-                    <input type="hidden" name="package_id" id="modalPackageId">
-                    <input type="hidden" name="pickup_latitude" id="pickupLatitude">
-                    <input type="hidden" name="pickup_longitude" id="pickupLongitude">
+                    <input type="hidden" name="package_id" id="modalPackageId" value="{{ old('package_id') }}">
+                    <input type="hidden" name="pickup_latitude" id="pickupLatitude" value="{{ old('pickup_latitude') }}">
+                    <input type="hidden" name="pickup_longitude" id="pickupLongitude" value="{{ old('pickup_longitude') }}">
 
                     <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                        
+                        <!-- General / Hidden Field Error Alerts -->
+                        @if($errors->has('package_id') || $errors->has('pickup_latitude') || $errors->has('pickup_longitude'))
+                            <div class="alert alert-danger rounded-3 p-2.5 mb-3 small" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <span>Please ensure a valid tour package and map pickup location are selected.</span>
+                            </div>
+                        @endif
+
                         <div class="p-3 bg-light rounded-3 mb-3">
                             <h6 class="fw-bold text-dark mb-2" id="modalPackageName">Package Name</h6>
-                            <div class="row g-2 text-muted small">
-                                <div class="col-6"><i class="bi bi-tag-fill me-1 text-primary"></i> Base: <span id="modalBasePriceLabel">₱0.00</span></div>
-                                <div class="col-6"><i class="bi bi-person-fill me-1 text-primary"></i> Per Head: <span id="modalPerHeadLabel">₱0.00</span></div>
+                            <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
+                                <div class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-tag-fill text-primary"></i> 
+                                    <span>Base:</span>
+                                    <span id="modalBasePriceLabel" class="fw-semibold text-dark">₱0.00</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-person-fill text-primary"></i> 
+                                    <span>Per Head:</span>
+                                    <span id="modalPerHeadLabel" class="fw-semibold text-dark">₱0.00</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 ms-auto">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                                        <i class="bi bi-people-fill me-1"></i> Max: <span id="modalPaxLimitLabel">0 pax</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Custom Stay Duration per Stop -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-muted small">
                                 <i class="bi bi-hourglass-split me-1"></i> Custom Stay Duration per Stop
                             </label>
                             <div class="border rounded-3 p-3 bg-light-subtle" id="modalItineraryContainer" style="max-height: 200px; overflow-y: auto;">
-                                <!-- Dynamic rows with duration inputs injected via JS -->
+                                <!-- Dynamic rows injected via JS -->
                             </div>
+                            @error('duration_hrs.*')
+                                <div class="text-danger small mt-1" style="font-size: 11px;">{{ $message }}</div>
+                            @enderror
+                            @error('duration_mins.*')
+                                <div class="text-danger small mt-1" style="font-size: 11px;">{{ $message }}</div>
+                            @enderror
                         </div>
 
+                        <!-- Pickup Location -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-muted small d-block">Pickup Location</label>
-                            <div class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between">
+                            <div class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between @if($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) border-danger @endif">
                                 <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
                                     <i class="bi bi-geo-alt-fill text-warning fs-5"></i>
-                                    <span class="small text-muted text-truncate" id="pickupCoordinatesPlaceholder">No pickup location selected on map</span>
+                                    <span class="small text-muted text-truncate" id="pickupCoordinatesPlaceholder">
+                                        @if(old('pickup_latitude') && old('pickup_longitude'))
+                                            Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
+                                        @else
+                                            No pickup location selected on map
+                                        @endif
+                                    </span>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0" onclick="startPickupMapMapping()">
                                     <i class="bi bi-pin-map"></i> Choose on Map
                                 </button>
                             </div>
+                            @error('pickup_latitude')
+                                <div class="text-danger small mt-1" style="font-size: 11px;">Please select a pickup point on the map.</div>
+                            @enderror
                         </div>
 
+                        <!-- Date & Time -->
                         <div class="row g-3 mb-3">
                             <div class="col-6">
                                 <label for="pickupDate" class="form-label fw-semibold text-muted small">Pickup Date</label>
-                                <input type="date" name="pickup_date" id="pickupDate" class="form-control text-muted" required min="{{ date('Y-m-d') }}">
+                                <input type="date" 
+                                       name="pickup_date" 
+                                       id="pickupDate" 
+                                       class="form-control text-muted @error('pickup_date') is-invalid @enderror" 
+                                       value="{{ old('pickup_date') }}" 
+                                       required 
+                                       min="{{ date('Y-m-d') }}">
+                                @error('pickup_date')
+                                    <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-6">
                                 <label for="pickupTime" class="form-label fw-semibold text-muted small">Pickup Time</label>
-                                <input type="time" name="pickup_time" id="pickupTime" class="form-control text-muted" required>
+                                <input type="time" 
+                                       name="pickup_time" 
+                                       id="pickupTime" 
+                                       class="form-control text-muted @error('pickup_time') is-invalid @enderror" 
+                                       value="{{ old('pickup_time') }}" 
+                                       required>
+                                @error('pickup_time')
+                                    <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
+                        <!-- Number of Heads -->
                         <div class="mb-4">
                             <label for="numberHeads" class="form-label fw-semibold text-muted small">Number of Heads</label>
-                            <div class="input-group">
+                            <div class="input-group has-validation">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-people text-primary"></i></span>
-                                <input type="number" name="number_of_heads" id="numberHeads" class="form-control border-start-0" required min="1" value="1" oninput="calculateTotal()">
+                                <input type="number" 
+                                       name="number_of_heads" 
+                                       id="numberHeads" 
+                                       class="form-control border-start-0 @error('number_of_heads') is-invalid @enderror" 
+                                       value="{{ old('number_of_heads', 1) }}" 
+                                       required 
+                                       min="1" 
+                                       oninput="calculateTotal()">
+                                @error('number_of_heads')
+                                    <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
+                        <!-- JOINER / OPEN GROUP OPTION -->
+                        <div class="p-3 border rounded-3 bg-light-subtle mb-3">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="allow_joiners" 
+                                       id="allowJoinersCheck" 
+                                       value="1"
+                                       {{ old('allow_joiners') ? 'checked' : '' }}
+                                       onchange="calculateTotal()">
+                                <label class="form-check-label fw-semibold text-dark small" for="allowJoinersCheck">
+                                    <i class="bi bi-people-fill text-primary me-1"></i> Allow Joiners / Open Tour Group
+                                </label>
+                            </div>
+                            <small class="d-block text-muted" style="font-size: 11px;">
+                                <strong>On:</strong> Pay only for your group size ((Base Price / Max Pax) &times; Your Heads). Other joiners can book remaining slots.<br>
+                                <strong>Off:</strong> Private Tour. You pay the full package price regardless of your group size.
+                            </small>
+                        </div>
+
+                        <!-- Summary Calculation Card -->
                         <div class="bg-light p-3 rounded-3 mb-3" style="font-size: 14px;">
                             <div class="d-flex justify-content-between mb-1.5 text-muted">
-                                <span>Package Base Price:</span>
-                                <span id="breakdownBase">₱0.00</span>
+                                <span>Booking Type:</span>
+                                <span id="breakdownBase">Private Tour (Full Base)</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2 text-muted">
-                                <span>Heads Accumulation Subtotal:</span>
-                                <span id="breakdownHeads">₱0.00</span>
+                                <span>Rate Breakdown:</span>
+                                <span id="breakdownHeads">1 head(s)</span>
                             </div>
                             <div class="d-flex justify-content-between border-top pt-2 fw-bold text-dark fs-6 mb-3">
                                 <span>Estimated Total:</span>
@@ -408,10 +500,9 @@
         var pickupMappingModeActive = false;
         var livePickupMarker = null;
         var bsModalInstance = null;
-        var currentCachedPackageObject = null;
 
         let activeBasePrice = 0;
-        let activePerHeadPrice = 0;
+        let activePaxLimit = 10;
 
         const packageData = {};
         @foreach($packages as $package)
@@ -419,7 +510,7 @@
                 id: {{ $package->id }},
                 name: {!! json_encode($package->name) !!},
                 package_price: {{ $package->package_price ?? 0 }},
-                perhead_price: {{ $package->perhead_price ?? 0 }},
+                max_pax: {{ $package->max_pax ?? $package->pax_limit ?? $package->capacity ?? 10 }},
                 spots: [
                     @foreach($package->places as $place)
                     {
@@ -601,7 +692,9 @@
         }
 
         function startPickupMapMapping() {
-            bsModalInstance.hide();
+            if (bsModalInstance) {
+                bsModalInstance.hide();
+            }
             pickupMappingModeActive = true;
             document.getElementById('mapPickerInstruction').classList.remove('d-none');
             document.getElementById('mapPickerInstruction').classList.add('d-flex');
@@ -646,7 +739,9 @@
                 pickupMappingModeActive = false;
                 document.getElementById('mapPickerInstruction').classList.add('d-none');
                 document.getElementById('mapPickerInstruction').classList.remove('d-flex');
-                bsModalInstance.show();
+                if (bsModalInstance) {
+                    bsModalInstance.show();
+                }
             }, 600);
         }
 
@@ -656,24 +751,43 @@
             document.getElementById('pickupCoordinatesPlaceholder').innerText = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
         }
 
+        function openCustomBookingModal() {
+            const customPackage = {
+                id: 0,
+                name: "Custom Tour Package",
+                package_price: 3500,
+                max_pax: 10,
+                spots: []
+            };
+            openBookingModal(customPackage);
+            document.getElementById('bookingModalLabel').innerText = "Create Your Custom Booking";
+        }
+
         function openBookingModal(packageObj) {
-            currentCachedPackageObject = packageObj;
-            
-            document.getElementById('modalPackageId').value = packageObj.id;
-            document.getElementById('modalPackageName').innerText = packageObj.name;
+            document.getElementById('bookingModalLabel').innerText = "Secure Your Reservation";
+            document.getElementById('modalPackageId').value = packageObj.id || 0;
+            document.getElementById('modalPackageName').innerText = packageObj.name || 'Tour Package';
             
             activeBasePrice = parseFloat(packageObj.package_price) || 0;
-            activePerHeadPrice = parseFloat(packageObj.perhead_price) || 0;
-
-            const formatCurrency = (val) => `₱${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            document.getElementById('modalBasePriceLabel').innerText = formatCurrency(activeBasePrice);
-            document.getElementById('modalPerHeadLabel').innerText = formatCurrency(activePerHeadPrice);
             
+            const rawPax = packageObj.max_pax || packageObj.pax_limit || packageObj.pax || packageObj.capacity;
+            activePaxLimit = parseInt(rawPax) > 0 ? parseInt(rawPax) : 10;
+
+            document.getElementById('modalPaxLimitLabel').innerText = `${activePaxLimit} pax`;
+
+            // Reset Joiner switch and head count
+            document.getElementById('allowJoinersCheck').checked = false;
+            const headsInput = document.getElementById('numberHeads');
+            headsInput.value = 1;
+            headsInput.setAttribute('max', activePaxLimit);
+            headsInput.setAttribute('min', 1);
+
+            // Populate Itinerary Container
             const itineraryContainer = document.getElementById('modalItineraryContainer');
             itineraryContainer.innerHTML = '';
             
             const targetedPackageData = packageData[packageObj.id];
-            if (targetedPackageData && targetedPackageData.spots.length > 0) {
+            if (targetedPackageData && targetedPackageData.spots && targetedPackageData.spots.length > 0) {
                 targetedPackageData.spots.forEach((spot, index) => {
                     const row = document.createElement('div');
                     row.className = "row g-2 align-items-center mb-3 pb-2 border-bottom last-border-0";
@@ -687,7 +801,7 @@
                             <div class="input-group input-group-sm">
                                 <input type="number" name="duration_hrs[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="24" required>
                                 <span class="input-group-text bg-white text-muted px-2" style="font-size: 11px;">hrs</span>
-                                <input type="number" name="duration_mins[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="59" step="5" required>
+                                <input type="number" name="duration_mins[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="59" required>
                                 <span class="input-group-text bg-white text-muted px-2" style="font-size: 11px;">mins</span>
                             </div>
                         </div>
@@ -695,40 +809,64 @@
                     itineraryContainer.appendChild(row);
                 });
             } else {
-                itineraryContainer.innerHTML = `<div class="text-center text-muted py-2 small">No structured itinerary stops mapped.</div>`;
+                itineraryContainer.innerHTML = `<div class="text-center text-muted py-2 small">Custom itinerary or standard route stops.</div>`;
             }
 
-            document.getElementById('numberHeads').value = 1;
             calculateTotal();
 
-            bsModalInstance = new bootstrap.Modal(document.getElementById('bookingModal'));
+            if (!bsModalInstance) {
+                bsModalInstance = new bootstrap.Modal(document.getElementById('bookingModal'));
+            }
             bsModalInstance.show();
         }
 
         function calculateTotal() {
             const headsInput = document.getElementById('numberHeads');
-            let headsCount = parseInt(headsInput.value) || 0;
+            let headsCount = parseInt(headsInput.value) || 1;
+            const isJoinerAllowed = document.getElementById('allowJoinersCheck').checked;
 
             if (headsCount < 1) {
-                headsInput.value = 1;
                 headsCount = 1;
+                headsInput.value = 1;
+            } else if (headsCount > activePaxLimit) {
+                headsCount = activePaxLimit;
+                headsInput.value = activePaxLimit;
             }
 
-            const headsSubtotal = headsCount * activePerHeadPrice;
-            const estimatedTotal = activeBasePrice + headsSubtotal;
-            const downpaymentRequired = estimatedTotal * 0.25;
+            const perHeadRate = activeBasePrice / (activePaxLimit || 1);
+            let totalToPay = isJoinerAllowed ? (perHeadRate * headsCount) : activeBasePrice;
 
+            const downpaymentRequired = totalToPay * 0.25;
             const formatCurrency = (val) => `₱${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             
-            document.getElementById('breakdownBase').innerText = formatCurrency(activeBasePrice);
-            document.getElementById('breakdownHeads').innerText = formatCurrency(headsSubtotal);
-            document.getElementById('modalTotalPrice').innerText = formatCurrency(estimatedTotal);
+            document.getElementById('modalPerHeadLabel').innerText = formatCurrency(perHeadRate);
+            document.getElementById('modalBasePriceLabel').innerText = formatCurrency(activeBasePrice);
+            
+            document.getElementById('breakdownBase').innerText = isJoinerAllowed ? `Joiner Mode (${headsCount}/${activePaxLimit} slots)` : 'Private Tour (Full Base)';
+            document.getElementById('breakdownHeads').innerText = `${headsCount} head(s) @ ${formatCurrency(perHeadRate)}/head`;
+            document.getElementById('modalTotalPrice').innerText = formatCurrency(totalToPay);
             document.getElementById('modalDownpaymentPrice').innerText = formatCurrency(downpaymentRequired);
         }
 
         window.onload = function() {
             loadAllGlobalPins();
         };
+
+        // Automatically re-open the modal if Laravel validation returned errors
+        @if($errors->any())
+            document.addEventListener("DOMContentLoaded", function() {
+                const failedPackageId = "{{ old('package_id', 0) }}";
+                const targetPackage = packageData[failedPackageId] || {
+                    id: 0,
+                    name: "Custom Tour Package",
+                    package_price: 3500,
+                    max_pax: 10,
+                    spots: []
+                };
+                
+                openBookingModal(targetPackage);
+            });
+        @endif
     </script>
 </body>
 </html>

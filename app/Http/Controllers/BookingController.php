@@ -54,7 +54,8 @@ class BookingController extends Controller
             'pickup_date'      => 'required|date|after_or_equal:today',
             'pickup_time'      => 'required', 
             'number_of_heads'  => 'required|integer|min:1',
-            
+            'allow_joiners'    => 'nullable|boolean',
+
             // Validate the incoming duration associative arrays
             'duration_hrs'     => 'required|array',
             'duration_hrs.*'   => 'required|integer|min:0',
@@ -71,10 +72,15 @@ class BookingController extends Controller
         
         $pax = (int)$validated['number_of_heads'];
         $basePrice = (float)$package->package_price;
-        $perHeadPrice = (float)$package->perhead_price;
+
+        $validated['joiners'] = $request->has('allow_joiners');
+
+        if($validated['joiners'])
+            $perHeadPrice = (float)$package->pax / (float)$package->package_price;
+        else
+            $perHeadPrice = (float)$package->package_price / $pax;
         
-        $totalPrice = $basePrice + ($perHeadPrice * $pax);
-        $depositAmount = $totalPrice * 0.25; // 25% deposit
+        $depositAmount = $basePrice * 0.25; // 25% deposit
 
         // 4. Create the Booking Record
         
@@ -85,8 +91,10 @@ class BookingController extends Controller
             'latitude'        => $validated['pickup_latitude'],
             'longitude'       => $validated['pickup_longitude'],
             'pax'             => $pax,
-            'total_price'     => $totalPrice,
+            'total_price'     => $basePrice,
+            'head_price'      => $perHeadPrice,
             'deposit_amount'  => $depositAmount,
+            'joiners'         => $validated['joiners'],
             'status'          => 'pending', 
         ]);
 
