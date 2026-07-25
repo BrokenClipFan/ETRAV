@@ -449,18 +449,21 @@
                             </small>
                         </div>
 
-                        <!-- Summary Calculation Card -->
                         <div class="bg-light p-3 rounded-3 mb-3" style="font-size: 14px;">
                             <div class="d-flex justify-content-between mb-1.5 text-muted">
                                 <span>Booking Type:</span>
                                 <span id="breakdownBase">Private Tour (Full Base)</span>
                             </div>
-                            <div class="d-flex justify-content-between mb-2 text-muted">
+                            <div class="d-flex justify-content-between mb-1.5 text-muted">
                                 <span>Rate Breakdown:</span>
                                 <span id="breakdownHeads">1 head(s)</span>
                             </div>
+                            <div class="d-flex justify-content-between mb-2 text-primary fw-semibold bg-primary-subtle p-2 rounded-2">
+                                <span><i class="bi bi-person-fill me-1"></i> Cost Per Person to Pay:</span>
+                                <span id="breakdownPerPerson">₱0.00 / person</span>
+                            </div>
                             <div class="d-flex justify-content-between border-top pt-2 fw-bold text-dark fs-6 mb-3">
-                                <span>Estimated Total:</span>
+                                <span>Estimated Total (Group):</span>
                                 <span id="modalTotalPrice">₱0.00</span>
                             </div>
                             
@@ -825,6 +828,7 @@
             let headsCount = parseInt(headsInput.value) || 1;
             const isJoinerAllowed = document.getElementById('allowJoinersCheck').checked;
 
+            // Enforce min/max heads bounds
             if (headsCount < 1) {
                 headsCount = 1;
                 headsInput.value = 1;
@@ -833,17 +837,39 @@
                 headsInput.value = activePaxLimit;
             }
 
+            // Standard per-head rate calculated from total base price divided by max pax limit
             const perHeadRate = activeBasePrice / (activePaxLimit || 1);
-            let totalToPay = isJoinerAllowed ? (perHeadRate * headsCount) : activeBasePrice;
+            
+            let totalToPay = 0;
+            let costPerPerson = 0;
+
+            if (isJoinerAllowed) {
+                // JOINER MODE: Booker pays fixed per-head rate multiplied by their group size
+                totalToPay = perHeadRate * headsCount;
+                costPerPerson = perHeadRate;
+            } else {
+                // PRIVATE MODE: Full package price divided equally among their head count
+                totalToPay = activeBasePrice;
+                costPerPerson = activeBasePrice / headsCount;
+            }
 
             const downpaymentRequired = totalToPay * 0.25;
             const formatCurrency = (val) => `₱${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             
+            // Update display labels
             document.getElementById('modalPerHeadLabel').innerText = formatCurrency(perHeadRate);
             document.getElementById('modalBasePriceLabel').innerText = formatCurrency(activeBasePrice);
             
-            document.getElementById('breakdownBase').innerText = isJoinerAllowed ? `Joiner Mode (${headsCount}/${activePaxLimit} slots)` : 'Private Tour (Full Base)';
-            document.getElementById('breakdownHeads').innerText = `${headsCount} head(s) @ ${formatCurrency(perHeadRate)}/head`;
+            document.getElementById('breakdownBase').innerText = isJoinerAllowed 
+                ? `Joiner Mode (${headsCount}/${activePaxLimit} slots)` 
+                : 'Private Tour (Full Base)';
+            
+            document.getElementById('breakdownHeads').innerText = isJoinerAllowed
+                ? `${headsCount} head(s) @ ${formatCurrency(perHeadRate)}/head`
+                : `${headsCount} head(s) splitting ${formatCurrency(activeBasePrice)}`;
+
+            // Set per-person cost and grand total
+            document.getElementById('breakdownPerPerson').innerText = `${formatCurrency(costPerPerson)} / person`;
             document.getElementById('modalTotalPrice').innerText = formatCurrency(totalToPay);
             document.getElementById('modalDownpaymentPrice').innerText = formatCurrency(downpaymentRequired);
         }
