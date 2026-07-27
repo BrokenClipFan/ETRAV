@@ -14,6 +14,7 @@ class Booking extends Model
         'pickup_datetime',
         'latitude',
         'longitude',
+        'pickup_place_name',
         'pax',
         'total_price',
         'head_price',
