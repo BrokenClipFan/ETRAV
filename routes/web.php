@@ -26,7 +26,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('/package/{id}/update/', [PackageController::class, 'update'])->name('package.update');
     Route::delete('/package/{id}/delete/', [PackageController::class, 'destroy'])->name('package.destroy'); 
 
-    Route::post('Place/store', [PlaceController::class, 'store'])->name('store.spot');
+    Route::post('place/store', [PlaceController::class, 'store'])->name('store.spot');
+    Route::put('place/update/{id}', [PlaceController::class, 'update'])->name('spot.update');
+    Route::delete('/admin/spots/{id}', [PlaceController::class, 'destroy'])->name('spot.destroy');
     
     Route::get('statistic', function () {
         return view('statistic');

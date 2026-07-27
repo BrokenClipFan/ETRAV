@@ -11,6 +11,8 @@ class Place extends Model
         'name',
         'price',
         'description',
+        'category',
+        'place',
         'image_path',
         'latitude',
         'longitude'

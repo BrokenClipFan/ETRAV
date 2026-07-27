@@ -86,17 +86,19 @@
             box-shadow: 0 .5rem 1rem rgba(13, 110, 253, .15) !important;
         }
 
+        /* Fixed Map Pin Tooltip Wrap & Alignment */
         .leaflet-tooltip.custom-pin-label {
             background: rgba(33, 37, 41, 0.95) !important;
             color: #fff !important;
             border: none !important;
-            border-radius: 6px !important;
-            padding: 4px 10px !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
             font-size: 11px !important;
             font-weight: 600 !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
             text-align: center !important;
             white-space: nowrap !important;
+            line-height: 1.3 !important;
         }
 
         .leaflet-tooltip-top.custom-pin-label::before {
@@ -140,22 +142,45 @@
             border-radius: 50%;
             box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
         }
+
+        .draggable-spot-item {
+            cursor: grab;
+            transition: background-color 0.2s ease;
+        }
+
+        .draggable-spot-item:active {
+            cursor: grabbing;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #e9ecef !important;
+        }
+
+        .package-card-rect {
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .package-card-rect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+        }
     </style>
 </head>
 
 <body class="bg-light">
 
     <!-- 1. AUTHENTICATION NAVBAR -->
-    <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top py-3">
+    <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top py-2">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2" href="#">
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"
-                    style="height: 36px; width: 36px;" class="text-primary fill-current">
-                    <path
-                        d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm2 32h-4v-4h4v4zm0-8h-4V12h4v16z"
-                        fill="currentColor" />
-                </svg>
-                <span class="fs-5 tracking-wider">ETRAV</span>
+                <img src="{{ asset('storage/logotext.png') }}" alt="ETRAV Logo"
+                    style="height: 38px; object-fit: contain;">
             </a>
 
             <div class="ms-auto">
@@ -202,36 +227,31 @@
         <div class="row h-100 g-0">
 
             <!-- LEFT SIDEBAR -->
-            <div class="col-12 col-md-4 sidebar-scroll p-4 bg-white border-end" id="packageSidebar">
-                <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div class="col-12 col-md-3 sidebar-scroll p-3 bg-white border-end" id="packageSidebar">
+                <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="fw-bold mb-1 text-dark">Cebu Tour Packages</h5>
-                        <p class="text-muted small mb-0">Select a package or build a custom route.</p>
+                        <h5 class="fw-bold mb-0 text-dark fs-6">Cebu Tour Packages</h5>
+                        <p class="text-muted small mb-0" style="font-size: 11px;">Select a package or custom route.</p>
                     </div>
+                    <!-- Action Buttons -->
                     <div class="d-flex gap-1.5 align-items-center">
-                        <button class="btn btn-sm btn-primary rounded-pill px-2.5 py-1 fw-medium"
+                        <button
+                            class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-medium shadow-sm d-flex align-items-center"
                             onclick="openCustomBookingModal()" style="font-size: 11px;">
-                            <i class="bi bi-plus-lg me-1"></i> Custom Tour
+                            <i class="bi bi-plus-lg me-1"></i> Custom
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill d-none px-2 py-1"
+                        <button
+                            class="btn btn-sm btn-outline-secondary rounded-pill d-none px-3 py-1.5 fw-medium d-flex align-items-center"
                             id="resetFilterBtn" onclick="resetFilters()" style="font-size: 11px;">
-                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
                         </button>
                     </div>
                 </div>
 
-                <div id="packagesContainer">
+                <div id="packagesContainer" class="d-flex flex-column gap-3">
                     @forelse($packages as $package)
                         @php
                             $type = $package->type ?? 'Standard';
-
-                            $bgStyles = match (strtolower($type)) {
-                                'popular' => 'bg-danger-subtle border-danger-subtle',
-                                'best combo' => 'bg-warning-subtle border-warning-subtle',
-                                'trending' => 'bg-primary-subtle border-primary-subtle',
-                                'budget friendly' => 'bg-success-subtle border-success-subtle',
-                                default => 'bg-light border-light-subtle',
-                            };
 
                             $badgeStyles = match (strtolower($type)) {
                                 'popular' => 'bg-danger text-white',
@@ -250,10 +270,10 @@
                             };
                         @endphp
 
-                        <div class="card border shadow-sm rounded-4 mb-4 overflow-hidden {{ $bgStyles }} package-card"
+                        <div class="card package-card-rect package-card shadow-sm bg-white"
                             data-package-id="{{ $package->id }}" id="package-card-{{ $package->id }}">
-                            <div class="position-relative bg-secondary-subtle text-center d-flex align-items-center justify-content-center text-muted"
-                                style="height: 160px;">
+                            <div class="position-relative text-center d-flex align-items-center justify-content-center text-muted"
+                                style="height: 160px; width: 100%; background-color: #f1f3f5;">
                                 <span
                                     class="badge type-badge shadow-sm {{ $badgeStyles }} text-uppercase tracking-wider px-2.5 py-1.5 rounded-pill"
                                     style="font-size: 10px;">
@@ -268,32 +288,35 @@
                                 @endif
 
                                 <span
-                                    class="position-absolute top-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7">
+                                    class="position-absolute bottom-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7 opacity-90">
                                     Base: ₱{{ number_format($package->package_price ?? 0) }}
                                 </span>
                             </div>
-                            <div class="card-body p-3">
-                                <h6 class="fw-bold text-dark mb-1">{{ $package->name }}</h6>
-                                <p class="text-muted small mb-2">
-                                    <i class="bi bi-person-fill text-muted"></i>
-                                    ₱{{ number_format($package->perhead_price ?? 0) }} per head
-                                </p>
-                                <p class="text-muted mb-3"
-                                    style="font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                    {{ $package->description ?? 'No description available for this package.' }}
-                                </p>
 
-                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1 fs-6 text-truncate">{{ $package->name }}</h6>
+                                    <p class="text-primary fw-semibold small mb-2">
+                                        ₱{{ number_format($package->perhead_price ?? 0) }} <span
+                                            class="text-muted fw-normal">/ per head</span>
+                                    </p>
+                                    <p class="text-muted mb-3"
+                                        style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        {{ $package->description ?? 'No description available for this package.' }}
+                                    </p>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto">
                                     <span class="text-muted font-monospace small" style="font-size: 11px;">
                                         <i class="bi bi-geo-alt-fill text-danger"></i> {{ $package->places->count() }}
                                         Spots
                                     </span>
-                                    <div class="d-flex gap-1.5">
+                                    <div class="d-flex gap-1">
                                         <button
-                                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-medium me-1"
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-medium"
                                             onclick="focusOnPackageRoute({{ $package->id }})"
                                             style="font-size: 11px;">
-                                            <i class="bi bi-map"></i> View Route
+                                            <i class="bi bi-map"></i> View
                                         </button>
                                         <button class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-medium"
                                             onclick='openBookingModal(@json($package))'
@@ -313,8 +336,8 @@
                 </div>
             </div>
 
-            <!-- RIGHT REGION: Map View & Overlays -->
-            <div class="col-12 col-md-8 p-3 bg-light position-relative d-none d-md-block">
+            <!-- RIGHT REGION: MAP VIEW -->
+            <div class="col-12 col-md-9 p-3 bg-light position-relative d-none d-md-block">
                 <div class="map-container">
                     <div id="mapPickerInstruction"
                         class="alert alert-warning py-2 px-3 align-items-center gap-2 d-none rounded-pill border-0"
@@ -353,7 +376,8 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-                <form action="{{ route('booking.store') }}" method="POST" id="bookingForm">
+                <form action="{{ route('booking.store') }}" method="POST" id="bookingForm"
+                    onsubmit="return validateTimeLimits()">
                     @csrf
                     <input type="hidden" name="package_id" id="modalPackageId" value="{{ old('package_id') }}">
                     <input type="hidden" name="pickup_latitude" id="pickupLatitude"
@@ -365,7 +389,6 @@
 
                     <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
 
-                        <!-- General / Hidden Field Error Alerts -->
                         @if ($errors->has('package_id') || $errors->has('pickup_latitude') || $errors->has('pickup_longitude'))
                             <div class="alert alert-danger rounded-3 p-2.5 mb-3 small" role="alert">
                                 <i class="bi bi-exclamation-triangle-fill me-1"></i>
@@ -386,24 +409,25 @@
                                     <span>Per Head:</span>
                                     <span id="modalPerHeadLabel" class="fw-semibold text-dark">₱0.00</span>
                                 </div>
-                                <div class="d-flex align-items-center gap-1 ms-auto">
-                                    <span
-                                        class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
-                                        <i class="bi bi-people-fill me-1"></i> Max: <span id="modalPaxLimitLabel">0
-                                            pax</span>
-                                    </span>
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Custom Stay Duration per Stop -->
+                        <!-- Custom Stay Duration & Draggable Order per Stop -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small">
-                                <i class="bi bi-hourglass-split me-1"></i> Custom Stay Duration per Stop
-                            </label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold text-muted small mb-0">
+                                    <i class="bi bi-hourglass-split me-1"></i> Custom Stay Duration per Stop (Max: 24h)
+                                </label>
+                                <span class="text-muted" style="font-size: 11px;"><i class="bi bi-grip-vertical"></i>
+                                    Drag to reorder</span>
+                            </div>
                             <div class="border rounded-3 p-3 bg-light-subtle" id="modalItineraryContainer"
-                                style="max-height: 200px; overflow-y: auto;">
-                                <!-- Dynamic rows injected via JS -->
+                                style="max-height: 220px; overflow-y: auto;">
+                                <!-- Dynamic draggable rows injected via JS -->
+                            </div>
+                            <div id="durationErrorMessage" class="text-danger small mt-1 d-none"
+                                style="font-size: 11px;">
+                                Total custom duration across all stops cannot exceed 24 hours.
                             </div>
                             @error('duration_hrs.*')
                                 <div class="text-danger small mt-1" style="font-size: 11px;">{{ $message }}</div>
@@ -418,9 +442,12 @@
                             <label class="form-label fw-semibold text-muted small d-block">Pickup Location</label>
                             <div
                                 class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) border-danger @endif">
-                                <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
-                                    <i class="bi bi-geo-alt-fill text-warning fs-5"></i>
-                                    <span class="small text-muted text-truncate" id="pickupCoordinatesPlaceholder">
+                                <div class="d-flex align-items-center gap-2 overflow-hidden me-2"
+                                    style="min-width: 0;">
+                                    <i class="bi bi-geo-alt-fill text-warning fs-5 flex-shrink-0"></i>
+                                    <span class="small text-muted text-truncate d-inline-block"
+                                        id="pickupCoordinatesPlaceholder" style="max-width: 240px;"
+                                        title="No pickup location selected on map">
                                         @if (old('pickup_latitude') && old('pickup_longitude'))
                                             Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
                                         @else
@@ -466,8 +493,15 @@
 
                         <!-- Number of Heads -->
                         <div class="mb-4">
-                            <label for="numberHeads" class="form-label fw-semibold text-muted small">Number of
-                                Heads</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="numberHeads" class="form-label fw-semibold text-muted small mb-0">Number
+                                    of Heads</label>
+                                <span
+                                    class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+                                    <i class="bi bi-people-fill me-1"></i> Max: <span id="modalPaxLimitLabel">0
+                                        pax</span>
+                                </span>
+                            </div>
                             <div class="input-group has-validation">
                                 <span class="input-group-text bg-white border-end-0"><i
                                         class="bi bi-people text-primary"></i></span>
@@ -546,6 +580,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Leaflet Map JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- SortableJS for Drag-and-Drop functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
         var map = L.map('map').setView([10.3157, 123.8854], 10);
@@ -559,6 +595,7 @@
         var pickupMappingModeActive = false;
         var livePickupMarker = null;
         var bsModalInstance = null;
+        var sortableItineraryInstance = null;
 
         let activeBasePrice = 0;
         let activePaxLimit = 10;
@@ -614,7 +651,7 @@
                         permanent: true,
                         direction: 'top',
                         className: 'custom-pin-label',
-                        offset: [0, -15]
+                        offset: [-15, -15]
                     });
 
                     marker.on('click', function() {
@@ -676,7 +713,7 @@
                     permanent: true,
                     direction: 'top',
                     className: 'custom-pin-label',
-                    offset: [0, -15]
+                    offset: [0, -5]
                 });
 
                 currentMarkers.push(marker);
@@ -792,14 +829,13 @@
                     permanent: true,
                     direction: 'top',
                     className: 'custom-pin-label custom-pickup-label',
-                    offset: [0, -15]
+                    offset: [0, -50]
                 }).openTooltip();
 
                 livePickupMarker.on('dragend', function(event) {
                     var marker = event.target;
                     var position = marker.getLatLng();
                     saveSelectedPickupCoordinates(position.lat, position.lng);
-
                 });
             }
 
@@ -822,30 +858,21 @@
             fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
                 .then(response => response.json())
                 .then(data => {
-                    // Get formatted display name or specific address parts
-                    // const placeNameData = data.display_name || "Unknown location";
                     let placeName = "";
+                    if (data.address.amenity) placeName += data.address.amenity + ", ";
+                    if (data.address.suburb) placeName += data.address.suburb + ", ";
+                    if (data.address.city) placeName += data.address.city + ", ";
+                    if (data.address.state) placeName += data.address.state + ", ";
 
-                    if (data.address.amenity)
-                        placeName += data.address.amenity + ", "
-
-                    if (data.address.suburb)
-                        placeName += data.address.suburb + ", "
-
-                    if (data.address.city)
-                        placeName += data.address.city + ", "
-
-                    if (data.address.state)
-                        placeName += data.address.state + ", "
-
-                    document.getElementById('pickupCoordinatesPlaceholder').innerText = placeName;
-                    document.getElementById('pickupPlaceName').value = placeName;
+                    const labelEl = document.getElementById('pickupCoordinatesPlaceholder');
+                    const formattedText = placeName ? placeName.replace(/, $/, '') : "Location Selected";
+                    labelEl.innerText = formattedText;
+                    labelEl.title = formattedText;
+                    document.getElementById('pickupPlaceName').value = formattedText;
                 })
                 .catch(error => {
                     console.error('Error fetching place name:', error);
                 });
-
-
         }
 
         function openCustomBookingModal() {
@@ -860,6 +887,41 @@
             document.getElementById('bookingModalLabel').innerText = "Create Your Custom Booking";
         }
 
+        function updateItineraryNumbers() {
+            const items = document.querySelectorAll('#modalItineraryContainer .draggable-spot-item');
+            items.forEach((item, idx) => {
+                const numBadge = item.querySelector('.spot-number');
+                if (numBadge) numBadge.innerText = `${idx + 1}.`;
+
+                const posInput = item.querySelector('.spot-position-input');
+                if (posInput) posInput.value = idx + 1;
+            });
+        }
+
+        function validateTimeLimits() {
+            let totalMinutes = 0;
+
+            const hrInputs = document.querySelectorAll('input[name^="duration_hrs"]');
+            const minInputs = document.querySelectorAll('input[name^="duration_mins"]');
+
+            hrInputs.forEach(input => {
+                totalMinutes += (parseInt(input.value) || 0) * 60;
+            });
+
+            minInputs.forEach(input => {
+                totalMinutes += (parseInt(input.value) || 0);
+            });
+
+            const errorEl = document.getElementById('durationErrorMessage');
+            if (totalMinutes > 1440) {
+                errorEl.classList.remove('d-none');
+                return false;
+            } else {
+                errorEl.classList.add('d-none');
+                return true;
+            }
+        }
+
         function openBookingModal(packageObj) {
             document.getElementById('bookingModalLabel').innerText = "Secure Your Reservation";
             document.getElementById('modalPackageId').value = packageObj.id || 0;
@@ -872,14 +934,12 @@
 
             document.getElementById('modalPaxLimitLabel').innerText = `${activePaxLimit} pax`;
 
-            // Reset Joiner switch and head count
             document.getElementById('allowJoinersCheck').checked = false;
             const headsInput = document.getElementById('numberHeads');
             headsInput.value = 1;
             headsInput.setAttribute('max', activePaxLimit);
             headsInput.setAttribute('min', 1);
 
-            // Populate Itinerary Container
             const itineraryContainer = document.getElementById('modalItineraryContainer');
             itineraryContainer.innerHTML = '';
 
@@ -887,24 +947,42 @@
             if (targetedPackageData && targetedPackageData.spots && targetedPackageData.spots.length > 0) {
                 targetedPackageData.spots.forEach((spot, index) => {
                     const row = document.createElement('div');
-                    row.className = "row g-2 align-items-center mb-3 pb-2 border-bottom last-border-0";
+                    row.className =
+                        "row g-2 align-items-center mb-3 pb-2 border-bottom draggable-spot-item bg-white p-2 rounded-2 shadow-sm";
                     row.innerHTML = `
-                        <div class="col-6">
-                            <span class="fw-bold text-primary me-1">${index + 1}.</span> 
-                            <span class="text-dark fw-semibold small d-inline-block text-truncate" style="max-width: 80%; vertical-align: middle;">${spot.name}</span>
-                            <small class="d-block text-muted" style="font-size: 10px;"><i class="bi bi-info-circle"></i> Recommended: ${spot.duration}</small>
+                        <input type="hidden" name="position[${spot.id}]" class="spot-position-input" value="${index + 1}">
+                        <div class="col-6 d-flex align-items-center gap-1 overflow-hidden">
+                            <i class="bi bi-grip-vertical text-muted fs-5 flex-shrink-0 drag-handle" style="cursor: grab;"></i>
+                            <span class="fw-bold text-primary spot-number flex-shrink-0">${index + 1}.</span> 
+                            <div class="text-truncate">
+                                <span class="text-dark fw-semibold small d-block text-truncate">${spot.name}</span>
+                                <small class="text-muted d-block" style="font-size: 10px;"><i class="bi bi-info-circle"></i> ${spot.duration}</small>
+                            </div>
                         </div>
                         <div class="col-6">
                             <div class="input-group input-group-sm">
-                                <input type="number" name="duration_hrs[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="24" required>
+                                <input type="number" name="duration_hrs[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="24" required oninput="validateTimeLimits()">
                                 <span class="input-group-text bg-white text-muted px-2" style="font-size: 11px;">hrs</span>
-                                <input type="number" name="duration_mins[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="59" required>
+                                <input type="number" name="duration_mins[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="59" required oninput="validateTimeLimits()">
                                 <span class="input-group-text bg-white text-muted px-2" style="font-size: 11px;">mins</span>
                             </div>
                         </div>
                     `;
                     itineraryContainer.appendChild(row);
                 });
+
+                if (sortableItineraryInstance) {
+                    sortableItineraryInstance.destroy();
+                }
+                sortableItineraryInstance = new Sortable(itineraryContainer, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function() {
+                        updateItineraryNumbers();
+                    }
+                });
+
             } else {
                 itineraryContainer.innerHTML =
                     `<div class="text-center text-muted py-2 small">Custom itinerary or standard route stops.</div>`;
@@ -923,7 +1001,6 @@
             let headsCount = parseInt(headsInput.value) || 1;
             const isJoinerAllowed = document.getElementById('allowJoinersCheck').checked;
 
-            // Enforce min/max heads bounds
             if (headsCount < 1) {
                 headsCount = 1;
                 headsInput.value = 1;
@@ -932,18 +1009,15 @@
                 headsInput.value = activePaxLimit;
             }
 
-            // Standard per-head rate calculated from total base price divided by max pax limit
             const perHeadRate = activeBasePrice / (activePaxLimit || 1);
 
             let totalToPay = 0;
             let costPerPerson = 0;
 
             if (isJoinerAllowed) {
-                // JOINER MODE: Booker pays fixed per-head rate multiplied by their group size
                 totalToPay = perHeadRate * headsCount;
                 costPerPerson = perHeadRate;
             } else {
-                // PRIVATE MODE: Full package price divided equally among their head count
                 totalToPay = activeBasePrice;
                 costPerPerson = activeBasePrice / headsCount;
             }
@@ -952,7 +1026,6 @@
             const formatCurrency = (val) =>
                 `₱${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-            // Update display labels
             document.getElementById('modalPerHeadLabel').innerText = formatCurrency(perHeadRate);
             document.getElementById('modalBasePriceLabel').innerText = formatCurrency(activeBasePrice);
 
@@ -964,7 +1037,6 @@
                 `${headsCount} head(s) @ ${formatCurrency(perHeadRate)}/head` :
                 `${headsCount} head(s) splitting ${formatCurrency(activeBasePrice)}`;
 
-            // Set per-person cost and grand total
             document.getElementById('breakdownPerPerson').innerText = `${formatCurrency(costPerPerson)} / person`;
             document.getElementById('modalTotalPrice').innerText = formatCurrency(totalToPay);
             document.getElementById('modalDownpaymentPrice').innerText = formatCurrency(downpaymentRequired);
@@ -974,7 +1046,6 @@
             loadAllGlobalPins();
         };
 
-        // Automatically re-open the modal if Laravel validation returned errors
         @if ($errors->any())
             document.addEventListener("DOMContentLoaded", function() {
                 const failedPackageId = "{{ old('package_id', 0) }}";
