@@ -150,7 +150,7 @@
                 </p>
             </div>
             <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                <a href="/welcome" class="btn btn-primary rounded-pill px-4 btn-sm fw-medium shadow-sm">
+                <a href="{{ route('home') }}" class="btn btn-primary rounded-pill px-4 btn-sm fw-medium shadow-sm">
                     <i class="bi bi-plus-lg me-1"></i> Book New Adventure
                 </a>
             </div>
@@ -532,7 +532,8 @@
                         <div class="d-flex justify-content-between mb-1 text-muted"><span>Per Head Scaling:</span><span
                                 id="detailHeadsPrice">₱0.00</span></div>
                         <div class="d-flex justify-content-between fw-bold text-dark border-top pt-2 fs-6">
-                            <span>Estimated Overall:</span><span id="detailTotalPrice">₱0.00</span></div>
+                            <span>Estimated Overall:</span><span id="detailTotalPrice">₱0.00</span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">

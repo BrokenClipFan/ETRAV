@@ -12,6 +12,7 @@ Route::middleware('auth')->group(function() {
     Route::post('/booking/store', [BookingController::class, 'store'])->name('booking.store');
 
     Route::get('/bookings/', [BookingController::class, 'view'])->name('bookings.view');
+    Route::get('/dashboard/', [BookingController::class, 'view'])->name('dashboard');
     Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
 });
 
@@ -31,10 +32,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         return view('statistic');
     });
 });
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
