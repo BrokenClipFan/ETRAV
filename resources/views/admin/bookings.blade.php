@@ -123,19 +123,9 @@
     </style>
 </head>
 <body>
-
-    <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom py-3 no-print" style="height: 65px;">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2" href="#">
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: 36px;" class="text-primary"><path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm2 32h-4v-4h4v4zm0-8h-4V12h4v16z" fill="currentColor"/></svg>
-                <span class="fs-5 fw-semibold tracking-wider">Admin Dashboard</span>
-            </a>
-            <div class="ms-auto">
-                <span class="text-muted small fw-medium me-3">Admin Mode</span>
-                <a href="#" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Go to User View</a>
-            </div>
-        </div>
-    </nav>
+    <div class="no-print">
+        @include('admin.layouts.nav')
+    </div>
 
     <div class="container-fluid p-4">
         

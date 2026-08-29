@@ -4,10 +4,15 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\PlaceController;
 use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\TransportController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Auth\FacebookAuthController;
 
 use Illuminate\Support\Facades\Route;
+
+Route::get('/test', function () {
+    return view('costum-tour');
+});
 
 Route::middleware('auth')->group(function() {
     Route::get('/', [BookingController::class, 'index'])->name('home');
@@ -35,6 +40,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('statistic', function () {
         return view('statistic');
     });
+
+    Route::resource('/transport', TransportController::class);
 });
 
 Route::middleware('auth')->group(function () {

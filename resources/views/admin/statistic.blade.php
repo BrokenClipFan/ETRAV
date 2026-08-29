@@ -35,6 +35,7 @@
     </style>
 </head>
 <body>
+    @include('admin.layouts.nav')
 
     <!-- SIDEBAR & MAIN WRAPPER COMPACT GRID -->
     <div class="container-fluid py-4 px-md-4">

@@ -146,33 +146,7 @@
 <body class="bg-light">
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom py-3" style="height: 65px;">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2" href="#">
-                <img src="{{ asset('storage/logotext.png') }}" alt="ETRAV Logo"
-                    style="height: 38px; width: auto; object-fit: contain;">
-                <span class="fs-6 text-muted fw-semibold ms-1">| Admin Dashboard</span>
-            </a>
-
-            <div class="ms-auto d-flex align-items-center gap-4">
-                <div class="d-none d-lg-block">
-                    <span class="text-muted small fw-medium">
-                        <i class="bi bi-mouse-fill text-primary"></i> Right-Click Map to Drop Pin | Drag Pin to Desired
-                        Spot
-                    </span>
-                </div>
-
-                <div class="position-relative cursor-pointer" role="button" id="notificationDropdown"
-                    style="z-index: 1050;">
-                    <i class="bi bi-bell text-secondary fs-5 hover-text-dark"></i>
-                    <span
-                        class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                        <span class="visually-hidden">New alerts</span>
-                    </span>
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('admin.layouts.nav')
 
     <div class="container-fluid main-admin-wrapper">
         <div class="row h-100 g-0">
