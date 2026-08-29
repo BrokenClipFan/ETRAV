@@ -14,7 +14,8 @@
             <label for="email" class="form-label text-muted small fw-bold mb-1">Email Address</label>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
-                <input id="email" type="email" name="email" class="form-control bg-light border-start-0" value="{{ old('email') }}" placeholder="name@example.com" required autofocus autocomplete="username">
+                <input id="email" type="email" name="email" class="form-control bg-light border-start-0"
+                    value="{{ old('email') }}" placeholder="name@example.com" required autofocus autocomplete="username">
             </div>
         </div>
 
@@ -23,12 +24,14 @@
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <label for="password" class="form-label text-muted small fw-bold mb-0">Password</label>
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="small text-decoration-none text-primary" style="font-size: 12px;">Forgot password?</a>
+                    <a href="{{ route('password.request') }}" class="small text-decoration-none text-primary"
+                        style="font-size: 12px;">Forgot password?</a>
                 @endif
             </div>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
-                <input id="password" type="password" name="password" class="form-control bg-light border-start-0" placeholder="••••••••" required autocomplete="current-password">
+                <input id="password" type="password" name="password" class="form-control bg-light border-start-0"
+                    placeholder="••••••••" required autocomplete="current-password">
             </div>
         </div>
 
@@ -43,8 +46,13 @@
             Sign In
         </button>
 
+        <a href="{{ route('facebook.login') }}" class="btn btn-primary w-100">
+            <i class="bi bi-facebook"></i> Login with Facebook
+        </a>
+
         <p class="text-center text-muted small mb-0">
-            New to ETRAV? <a href="{{ route('register') }}" class="text-primary fw-semibold text-decoration-none">Create an account</a>
+            New to ETRAV? <a href="{{ route('register') }}" class="text-primary fw-semibold text-decoration-none">Create an
+                account</a>
         </p>
     </form>
 @endsection

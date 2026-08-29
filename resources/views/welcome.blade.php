@@ -86,7 +86,6 @@
             box-shadow: 0 .5rem 1rem rgba(13, 110, 253, .15) !important;
         }
 
-        /* Fixed Map Pin Tooltip Wrap & Alignment */
         .leaflet-tooltip.custom-pin-label {
             background: rgba(33, 37, 41, 0.95) !important;
             color: #fff !important;
@@ -188,6 +187,7 @@
                     <button
                         class="btn border-0 d-flex align-items-center gap-1 text-muted fw-medium fs-6 bg-transparent p-0 position-relative"
                         type="button" id="breezeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-5 text-secondary me-1"></i>
                         <span>Hello {{ $user->name }}</span>
                         <span id="nav-red-dot"
                             class="notify-dot-absolute {{ $hasNotification ? '' : 'd-none' }}"></span>
@@ -195,12 +195,13 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border mt-2 py-1"
                         aria-labelledby="breezeDropdown" style="width: 220px; border-radius: 6px;">
-                        <li><a class="dropdown-item py-2 text-muted px-4" href="#"><i
-                                    class="bi bi-person me-2"></i> Profile</a></li>
+                        <li><a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center" href="#"><i
+                                    class="bi bi-person me-2 fs-6"></i> Profile</a></li>
                         <li>
                             <a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center justify-content-between"
                                 href="{{ route('bookings.view') }}">
-                                <span><i class="bi bi-journal-bookmark me-2"></i> Bookings</span>
+                                <span class="d-flex align-items-center"><i class="bi bi-journal-bookmark me-2 fs-6"></i>
+                                    Bookings</span>
                                 <span id="dropdown-new-badge"
                                     class="badge rounded-pill bg-danger {{ $hasNotification ? '' : 'd-none' }}"
                                     style="font-size: 10px;">New</span>
@@ -212,8 +213,9 @@
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="dropdown-item py-2 text-danger px-4 fw-medium"><i
-                                        class="bi bi-box-arrow-right me-2"></i> Log Out</button>
+                                <button type="submit"
+                                    class="dropdown-item py-2 text-danger px-4 fw-medium d-flex align-items-center"><i
+                                        class="bi bi-box-arrow-right me-2 fs-6"></i> Log Out</button>
                             </form>
                         </li>
                     </ul>
@@ -230,7 +232,9 @@
             <div class="col-12 col-md-3 sidebar-scroll p-3 bg-white border-end" id="packageSidebar">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="fw-bold mb-0 text-dark fs-6">Cebu Tour Packages</h5>
+                        <h5 class="fw-bold mb-0 text-dark fs-6 d-flex align-items-center gap-1">
+                            <i class="bi bi-compass text-primary"></i> Cebu Tour Packages
+                        </h5>
                         <p class="text-muted small mb-0" style="font-size: 11px;">Select a package or custom route.</p>
                     </div>
                     <!-- Action Buttons -->
@@ -251,9 +255,9 @@
                 <div id="packagesContainer" class="d-flex flex-column gap-3">
                     @forelse($packages as $package)
                         @php
-                            $type = $package->type ?? 'Standard';
+                            $category = $package->category ?? 'Standard';
 
-                            $badgeStyles = match (strtolower($type)) {
+                            $badgeStyles = match (strtolower($category)) {
                                 'popular' => 'bg-danger text-white',
                                 'best combo' => 'bg-warning text-dark',
                                 'trending' => 'bg-primary text-white',
@@ -261,7 +265,7 @@
                                 default => 'bg-secondary text-white',
                             };
 
-                            $tagIcon = match (strtolower($type)) {
+                            $tagIcon = match (strtolower($category)) {
                                 'popular' => 'bi-fire',
                                 'best combo' => 'bi-star-fill',
                                 'trending' => 'bi-lightning-charge-fill',
@@ -275,9 +279,9 @@
                             <div class="position-relative text-center d-flex align-items-center justify-content-center text-muted"
                                 style="height: 160px; width: 100%; background-color: #f1f3f5;">
                                 <span
-                                    class="badge type-badge shadow-sm {{ $badgeStyles }} text-uppercase tracking-wider px-2.5 py-1.5 rounded-pill"
+                                    class="badge type-badge shadow-sm {{ $badgeStyles }} text-uppercase tracking-wider px-2.5 py-1.5 rounded-pill d-flex align-items-center gap-1"
                                     style="font-size: 10px;">
-                                    <i class="bi {{ $tagIcon }} me-1"></i> {{ $type }}
+                                    <i class="bi {{ $tagIcon }}"></i> {{ $category }}
                                 </span>
 
                                 @if (!empty($package->image_path))
@@ -288,15 +292,17 @@
                                 @endif
 
                                 <span
-                                    class="position-absolute bottom-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7 opacity-90">
-                                    Base: ₱{{ number_format($package->package_price ?? 0) }}
+                                    class="position-absolute bottom-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7 opacity-90 d-flex align-items-center gap-1">
+                                    <i class="bi bi-cash-stack"></i> Base:
+                                    ₱{{ number_format($package->package_price ?? 0) }}
                                 </span>
                             </div>
 
                             <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
                                 <div>
                                     <h6 class="fw-bold text-dark mb-1 fs-6 text-truncate">{{ $package->name }}</h6>
-                                    <p class="text-primary fw-semibold small mb-2">
+                                    <p class="text-primary fw-semibold small mb-2 d-flex align-items-center gap-1">
+                                        <i class="bi bi-person-check-fill"></i>
                                         ₱{{ number_format($package->perhead_price ?? 0) }} <span
                                             class="text-muted fw-normal">/ per head</span>
                                     </p>
@@ -307,21 +313,23 @@
                                 </div>
 
                                 <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto">
-                                    <span class="text-muted font-monospace small" style="font-size: 11px;">
+                                    <span class="text-muted font-monospace small d-flex align-items-center gap-1"
+                                        style="font-size: 11px;">
                                         <i class="bi bi-geo-alt-fill text-danger"></i> {{ $package->places->count() }}
                                         Spots
                                     </span>
                                     <div class="d-flex gap-1">
                                         <button
-                                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-medium"
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-medium d-flex align-items-center gap-1"
                                             onclick="focusOnPackageRoute({{ $package->id }})"
                                             style="font-size: 11px;">
                                             <i class="bi bi-map"></i> View
                                         </button>
-                                        <button class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-medium"
+                                        <button
+                                            class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-medium d-flex align-items-center gap-1"
                                             onclick='openBookingModal(@json($package))'
                                             style="font-size: 11px;">
-                                            Book Now
+                                            <i class="bi bi-calendar-check"></i> Book Now
                                         </button>
                                     </div>
                                 </div>
@@ -342,7 +350,7 @@
                     <div id="mapPickerInstruction"
                         class="alert alert-warning py-2 px-3 align-items-center gap-2 d-none rounded-pill border-0"
                         role="alert">
-                        <i class="bi bi-pin-map-fill text-danger"></i>
+                        <i class="bi bi-pin-map-fill text-danger fs-5"></i>
                         <span class="small fw-semibold text-dark">Click anywhere on the map or drag the gold pin to set
                             your Pickup Point!</span>
                     </div>
@@ -352,12 +360,12 @@
                     <div id="spotsPanel" class="spots-overlay-panel card shadow border-0 bg-white d-none">
                         <div
                             class="card-header bg-dark text-white py-2 px-3 fw-bold small d-flex justify-content-between align-items-center">
-                            <span>📍 Tour Spots Itinerary</span>
+                            <span class="d-flex align-items-center gap-1"><i
+                                    class="bi bi-pin-angle-fill text-warning"></i> Tour Spots Itinerary</span>
                             <span class="badge bg-secondary-subtle text-dark border font-monospace"
                                 id="spotCount">0</span>
                         </div>
                         <div class="list-group list-group-flush" id="spotsListGroup">
-                            <!-- Dynamic items via JavaScript -->
                         </div>
                     </div>
                 </div>
@@ -372,7 +380,9 @@
         <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content rounded-4 border-0 shadow">
                 <div class="modal-header bg-primary text-white py-3 rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="bookingModalLabel">Secure Your Reservation</h5>
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="bookingModalLabel">
+                        <i class="bi bi-shield-check fs-5"></i> Secure Your Reservation
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
@@ -390,14 +400,17 @@
                     <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
 
                         @if ($errors->has('package_id') || $errors->has('pickup_latitude') || $errors->has('pickup_longitude'))
-                            <div class="alert alert-danger rounded-3 p-2.5 mb-3 small" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <div class="alert alert-danger rounded-3 p-2.5 mb-3 small d-flex align-items-center gap-2"
+                                role="alert">
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
                                 <span>Please ensure a valid tour package and map pickup location are selected.</span>
                             </div>
                         @endif
 
                         <div class="p-3 bg-light rounded-3 mb-3">
-                            <h6 class="fw-bold text-dark mb-2" id="modalPackageName">Package Name</h6>
+                            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2" id="modalPackageName">
+                                <i class="bi bi-box-seam text-primary"></i> Package Name
+                            </h6>
                             <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
                                 <div class="d-flex align-items-center gap-1">
                                     <i class="bi bi-tag-fill text-primary"></i>
@@ -415,31 +428,43 @@
                         <!-- Custom Stay Duration & Draggable Order per Stop -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fw-semibold text-muted small mb-0">
-                                    <i class="bi bi-hourglass-split me-1"></i> Custom Stay Duration per Stop (Max: 24h)
+                                <label
+                                    class="form-label fw-semibold text-muted small mb-0 d-flex align-items-center gap-1">
+                                    <i class="bi bi-hourglass-split me-1 text-primary"></i> Custom Stay Duration per
+                                    Stop (Max: 24h)
                                 </label>
-                                <span class="text-muted" style="font-size: 11px;"><i class="bi bi-grip-vertical"></i>
-                                    Drag to reorder</span>
+                                <span class="text-muted d-flex align-items-center gap-1" style="font-size: 11px;">
+                                    <i class="bi bi-grip-vertical"></i> Drag to reorder
+                                </span>
                             </div>
                             <div class="border rounded-3 p-3 bg-light-subtle" id="modalItineraryContainer"
                                 style="max-height: 220px; overflow-y: auto;">
-                                <!-- Dynamic draggable rows injected via JS -->
                             </div>
-                            <div id="durationErrorMessage" class="text-danger small mt-1 d-none"
+                            <div id="durationErrorMessage"
+                                class="text-danger small mt-1 d-none d-flex align-items-center gap-1"
                                 style="font-size: 11px;">
-                                Total custom duration across all stops cannot exceed 24 hours.
+                                <i class="bi bi-exclamation-circle-fill"></i> Total custom duration across all stops
+                                cannot exceed 24 hours.
                             </div>
                             @error('duration_hrs.*')
-                                <div class="text-danger small mt-1" style="font-size: 11px;">{{ $message }}</div>
+                                <div class="text-danger small mt-1 d-flex align-items-center gap-1"
+                                    style="font-size: 11px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> {{ $message }}
+                                </div>
                             @enderror
                             @error('duration_mins.*')
-                                <div class="text-danger small mt-1" style="font-size: 11px;">{{ $message }}</div>
+                                <div class="text-danger small mt-1 d-flex align-items-center gap-1"
+                                    style="font-size: 11px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> {{ $message }}
+                                </div>
                             @enderror
                         </div>
 
                         <!-- Pickup Location -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small d-block">Pickup Location</label>
+                            <label class="form-label fw-semibold text-muted small d-block">
+                                <i class="bi bi-geo-alt me-1 text-primary"></i> Pickup Location
+                            </label>
                             <div
                                 class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) border-danger @endif">
                                 <div class="d-flex align-items-center gap-2 overflow-hidden me-2"
@@ -456,22 +481,25 @@
                                     </span>
                                 </div>
                                 <button type="button"
-                                    class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0"
+                                    class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0 d-flex align-items-center gap-1"
                                     onclick="startPickupMapMapping()">
                                     <i class="bi bi-pin-map"></i> Choose on Map
                                 </button>
                             </div>
                             @error('pickup_latitude')
-                                <div class="text-danger small mt-1" style="font-size: 11px;">Please select a pickup point
-                                    on the map.</div>
+                                <div class="text-danger small mt-1 d-flex align-items-center gap-1"
+                                    style="font-size: 11px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Please select a pickup point on the map.
+                                </div>
                             @enderror
                         </div>
 
                         <!-- Date & Time -->
                         <div class="row g-3 mb-3">
                             <div class="col-6">
-                                <label for="pickupDate" class="form-label fw-semibold text-muted small">Pickup
-                                    Date</label>
+                                <label for="pickupDate" class="form-label fw-semibold text-muted small">
+                                    <i class="bi bi-calendar3 me-1 text-primary"></i> Pickup Date
+                                </label>
                                 <input type="date" name="pickup_date" id="pickupDate"
                                     class="form-control text-muted @error('pickup_date') is-invalid @enderror"
                                     value="{{ old('pickup_date') }}" required min="{{ date('Y-m-d') }}">
@@ -480,8 +508,9 @@
                                 @enderror
                             </div>
                             <div class="col-6">
-                                <label for="pickupTime" class="form-label fw-semibold text-muted small">Pickup
-                                    Time</label>
+                                <label for="pickupTime" class="form-label fw-semibold text-muted small">
+                                    <i class="bi bi-clock me-1 text-primary"></i> Pickup Time
+                                </label>
                                 <input type="time" name="pickup_time" id="pickupTime"
                                     class="form-control text-muted @error('pickup_time') is-invalid @enderror"
                                     value="{{ old('pickup_time') }}" required>
@@ -494,8 +523,9 @@
                         <!-- Number of Heads -->
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label for="numberHeads" class="form-label fw-semibold text-muted small mb-0">Number
-                                    of Heads</label>
+                                <label for="numberHeads" class="form-label fw-semibold text-muted small mb-0">
+                                    <i class="bi bi-people me-1 text-primary"></i> Number of Heads
+                                </label>
                                 <span
                                     class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
                                     <i class="bi bi-people-fill me-1"></i> Max: <span id="modalPaxLimitLabel">0
@@ -504,7 +534,7 @@
                             </div>
                             <div class="input-group has-validation">
                                 <span class="input-group-text bg-white border-end-0"><i
-                                        class="bi bi-people text-primary"></i></span>
+                                        class="bi bi-person-plus text-primary"></i></span>
                                 <input type="number" name="number_of_heads" id="numberHeads"
                                     class="form-control border-start-0 @error('number_of_heads') is-invalid @enderror"
                                     value="{{ old('number_of_heads', 1) }}" required min="1"
@@ -535,11 +565,11 @@
 
                         <div class="bg-light p-3 rounded-3 mb-3" style="font-size: 14px;">
                             <div class="d-flex justify-content-between mb-1.5 text-muted">
-                                <span>Booking Type:</span>
+                                <span><i class="bi bi-info-circle me-1"></i> Booking Type:</span>
                                 <span id="breakdownBase">Private Tour (Full Base)</span>
                             </div>
                             <div class="d-flex justify-content-between mb-1.5 text-muted">
-                                <span>Rate Breakdown:</span>
+                                <span><i class="bi bi-calculator me-1"></i> Rate Breakdown:</span>
                                 <span id="breakdownHeads">1 head(s)</span>
                             </div>
                             <div
@@ -548,14 +578,14 @@
                                 <span id="breakdownPerPerson">₱0.00 / person</span>
                             </div>
                             <div class="d-flex justify-content-between border-top pt-2 fw-bold text-dark fs-6 mb-3">
-                                <span>Estimated Total (Group):</span>
+                                <span><i class="bi bi-wallet2 me-1"></i> Estimated Total (Group):</span>
                                 <span id="modalTotalPrice">₱0.00</span>
                             </div>
 
                             <div
                                 class="d-flex justify-content-between align-items-center border-top border-2 border-primary-subtle pt-2">
                                 <div class="text-primary fw-bold">
-                                    <span>25% Booking Deposit:</span>
+                                    <span><i class="bi bi-credit-card-2-front me-1"></i> 25% Booking Deposit:</span>
                                     <small class="d-block text-muted fw-normal" style="font-size: 11px;">Required to
                                         confirm reservation</small>
                                 </div>
@@ -566,10 +596,13 @@
                     </div>
 
                     <div class="modal-footer border-0 p-4 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4 py-2 text-muted fw-medium"
-                            data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-medium">Proceed to
-                            Payment</button>
+                        <button type="button"
+                            class="btn btn-light rounded-pill px-4 py-2 text-muted fw-medium d-flex align-items-center gap-1"
+                            data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Cancel</button>
+                        <button type="submit"
+                            class="btn btn-primary rounded-pill px-4 py-2 fw-medium d-flex align-items-center gap-1">
+                            <i class="bi bi-credit-card"></i> Proceed to Payment
+                        </button>
                     </div>
                 </form>
             </div>
@@ -639,9 +672,9 @@
                             <img src="${imgUrl}" class="popup-img" alt="${spot.name}">
                             <div class="p-3">
                                 <h6 class="fw-bold mb-1 text-dark">${spot.name}</h6>
-                                <div class="mb-2"><span class="badge bg-warning text-dark"><i class="bi bi-clock-history"></i> Est: ${spot.duration}</span></div>
+                                <div class="mb-2"><span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i> Est: ${spot.duration}</span></div>
                                 <p class="text-muted small mb-1">${spot.description || 'No summary overview provided.'}</p>
-                                <span class="badge bg-dark rounded-pill" style="font-size: 10px;">Part of: ${currentPackage.name}</span>
+                                <span class="badge bg-dark rounded-pill" style="font-size: 10px;"><i class="bi bi-box-seam me-1"></i> Part of: ${currentPackage.name}</span>
                             </div>
                         </div>
                     `;
@@ -701,7 +734,7 @@
                         <img src="${imgUrl}" class="popup-img" alt="${spot.name}">
                         <div class="p-3">
                             <h6 class="fw-bold mb-1 text-dark">${spot.name}</h6>
-                            <div class="mb-1"><span class="badge bg-warning text-dark"><i class="bi bi-clock-history"></i> Est: ${spot.duration}</span></div>
+                            <div class="mb-1"><span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i> Est: ${spot.duration}</span></div>
                             <p class="text-muted small mb-0">${spot.description || 'No summary overview provided.'}</p>
                             <span class="badge bg-primary-subtle text-primary rounded-pill mt-2 font-monospace">Stop #${index + 1}</span>
                         </div>
@@ -728,7 +761,7 @@
                         <span class="badge bg-primary-subtle text-primary rounded-circle font-monospace">${index + 1}</span> 
                         <span>${spot.name}</span>
                     </div>
-                    <span class="text-muted font-monospace" style="font-size:11px;"><i class="bi bi-clock"></i> ${spot.duration}</span>
+                    <span class="text-muted font-monospace" style="font-size:11px;"><i class="bi bi-clock me-1"></i>${spot.duration}</span>
                 `;
 
                 btn.onclick = function() {
@@ -884,7 +917,8 @@
                 spots: []
             };
             openBookingModal(customPackage);
-            document.getElementById('bookingModalLabel').innerText = "Create Your Custom Booking";
+            document.getElementById('bookingModalLabel').innerHTML =
+                '<i class="bi bi-sliders fs-5 me-1"></i> Create Your Custom Booking';
         }
 
         function updateItineraryNumbers() {
@@ -923,9 +957,11 @@
         }
 
         function openBookingModal(packageObj) {
-            document.getElementById('bookingModalLabel').innerText = "Secure Your Reservation";
+            document.getElementById('bookingModalLabel').innerHTML =
+                '<i class="bi bi-shield-check fs-5 me-1"></i> Secure Your Reservation';
             document.getElementById('modalPackageId').value = packageObj.id || 0;
-            document.getElementById('modalPackageName').innerText = packageObj.name || 'Tour Package';
+            document.getElementById('modalPackageName').innerHTML =
+                `<i class="bi bi-box-seam text-primary me-1"></i> ${packageObj.name || 'Tour Package'}`;
 
             activeBasePrice = parseFloat(packageObj.package_price) || 0;
 
@@ -956,7 +992,7 @@
                             <span class="fw-bold text-primary spot-number flex-shrink-0">${index + 1}.</span> 
                             <div class="text-truncate">
                                 <span class="text-dark fw-semibold small d-block text-truncate">${spot.name}</span>
-                                <small class="text-muted d-block" style="font-size: 10px;"><i class="bi bi-info-circle"></i> ${spot.duration}</small>
+                                <small class="text-muted d-block" style="font-size: 10px;"><i class="bi bi-info-circle me-1"></i>${spot.duration}</small>
                             </div>
                         </div>
                         <div class="col-6">
@@ -985,7 +1021,7 @@
 
             } else {
                 itineraryContainer.innerHTML =
-                    `<div class="text-center text-muted py-2 small">Custom itinerary or standard route stops.</div>`;
+                    `<div class="text-center text-muted py-2 small"><i class="bi bi-info-circle me-1"></i> Custom itinerary or standard route stops.</div>`;
             }
 
             calculateTotal();

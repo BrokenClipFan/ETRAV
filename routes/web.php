@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\PlaceController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Auth\FacebookAuthController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function() {
@@ -40,5 +42,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::get('/auth/facebook', [FacebookAuthController::class, 'redirect'])
+    ->name('facebook.login');
+
+Route::get('/auth/facebook/callback', [FacebookAuthController::class, 'callback']);
 
 require __DIR__.'/auth.php';
