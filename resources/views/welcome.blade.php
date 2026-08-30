@@ -239,11 +239,11 @@
                     </div>
                     <!-- Action Buttons -->
                     <div class="d-flex gap-1.5 align-items-center">
-                        <button
+                        <a href="/test"
                             class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-medium shadow-sm d-flex align-items-center"
-                            onclick="openCustomBookingModal()" style="font-size: 11px;">
+                            style="font-size: 11px;">
                             <i class="bi bi-plus-lg me-1"></i> Custom
-                        </button>
+                        </a>
                         <button
                             class="btn btn-sm btn-outline-secondary rounded-pill d-none px-3 py-1.5 fw-medium d-flex align-items-center"
                             id="resetFilterBtn" onclick="resetFilters()" style="font-size: 11px;">
@@ -386,8 +386,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-                <form action="{{ route('booking.store') }}" method="POST" id="bookingForm"
-                    onsubmit="return validateTimeLimits()">
+                <form action="{{ route('booking.store') }}" method="POST" id="bookingForm">
                     @csrf
                     <input type="hidden" name="package_id" id="modalPackageId" value="{{ old('package_id') }}">
                     <input type="hidden" name="pickup_latitude" id="pickupLatitude"
@@ -425,39 +424,12 @@
                             </div>
                         </div>
 
-                        <!-- Custom Stay Duration & Draggable Order per Stop -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label
-                                    class="form-label fw-semibold text-muted small mb-0 d-flex align-items-center gap-1">
-                                    <i class="bi bi-hourglass-split me-1 text-primary"></i> Custom Stay Duration per
-                                    Stop (Max: 24h)
-                                </label>
-                                <span class="text-muted d-flex align-items-center gap-1" style="font-size: 11px;">
-                                    <i class="bi bi-grip-vertical"></i> Drag to reorder
-                                </span>
+                        <!-- Standard Package Info -->
+                        <div class="mb-3 p-3 bg-white border rounded-3 shadow-sm d-none" id="standardSpotsInfo">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Included Stops:</h6>
+                            <div id="modalItineraryContainer" class="d-flex flex-wrap gap-2">
+                                <!-- Spots badges will be injected here -->
                             </div>
-                            <div class="border rounded-3 p-3 bg-light-subtle" id="modalItineraryContainer"
-                                style="max-height: 220px; overflow-y: auto;">
-                            </div>
-                            <div id="durationErrorMessage"
-                                class="text-danger small mt-1 d-none d-flex align-items-center gap-1"
-                                style="font-size: 11px;">
-                                <i class="bi bi-exclamation-circle-fill"></i> Total custom duration across all stops
-                                cannot exceed 24 hours.
-                            </div>
-                            @error('duration_hrs.*')
-                                <div class="text-danger small mt-1 d-flex align-items-center gap-1"
-                                    style="font-size: 11px;">
-                                    <i class="bi bi-exclamation-circle-fill"></i> {{ $message }}
-                                </div>
-                            @enderror
-                            @error('duration_mins.*')
-                                <div class="text-danger small mt-1 d-flex align-items-center gap-1"
-                                    style="font-size: 11px;">
-                                    <i class="bi bi-exclamation-circle-fill"></i> {{ $message }}
-                                </div>
-                            @enderror
                         </div>
 
                         <!-- Pickup Location -->
@@ -883,7 +855,6 @@
                 }
             }, 600);
         }
-
         function saveSelectedPickupCoordinates(lat, lng) {
             document.getElementById('pickupLatitude').value = lat.toFixed(6);
             document.getElementById('pickupLongitude').value = lng.toFixed(6);
@@ -908,54 +879,6 @@
                 });
         }
 
-        function openCustomBookingModal() {
-            const customPackage = {
-                id: 0,
-                name: "Custom Tour Package",
-                package_price: 3500,
-                max_pax: 10,
-                spots: []
-            };
-            openBookingModal(customPackage);
-            document.getElementById('bookingModalLabel').innerHTML =
-                '<i class="bi bi-sliders fs-5 me-1"></i> Create Your Custom Booking';
-        }
-
-        function updateItineraryNumbers() {
-            const items = document.querySelectorAll('#modalItineraryContainer .draggable-spot-item');
-            items.forEach((item, idx) => {
-                const numBadge = item.querySelector('.spot-number');
-                if (numBadge) numBadge.innerText = `${idx + 1}.`;
-
-                const posInput = item.querySelector('.spot-position-input');
-                if (posInput) posInput.value = idx + 1;
-            });
-        }
-
-        function validateTimeLimits() {
-            let totalMinutes = 0;
-
-            const hrInputs = document.querySelectorAll('input[name^="duration_hrs"]');
-            const minInputs = document.querySelectorAll('input[name^="duration_mins"]');
-
-            hrInputs.forEach(input => {
-                totalMinutes += (parseInt(input.value) || 0) * 60;
-            });
-
-            minInputs.forEach(input => {
-                totalMinutes += (parseInt(input.value) || 0);
-            });
-
-            const errorEl = document.getElementById('durationErrorMessage');
-            if (totalMinutes > 1440) {
-                errorEl.classList.remove('d-none');
-                return false;
-            } else {
-                errorEl.classList.add('d-none');
-                return true;
-            }
-        }
-
         function openBookingModal(packageObj) {
             document.getElementById('bookingModalLabel').innerHTML =
                 '<i class="bi bi-shield-check fs-5 me-1"></i> Secure Your Reservation';
@@ -978,50 +901,20 @@
 
             const itineraryContainer = document.getElementById('modalItineraryContainer');
             itineraryContainer.innerHTML = '';
+            
+            const standardSpotsInfo = document.getElementById('standardSpotsInfo');
 
             const targetedPackageData = packageData[packageObj.id];
             if (targetedPackageData && targetedPackageData.spots && targetedPackageData.spots.length > 0) {
+                standardSpotsInfo.classList.remove('d-none');
                 targetedPackageData.spots.forEach((spot, index) => {
-                    const row = document.createElement('div');
-                    row.className =
-                        "row g-2 align-items-center mb-3 pb-2 border-bottom draggable-spot-item bg-white p-2 rounded-2 shadow-sm";
-                    row.innerHTML = `
-                        <input type="hidden" name="position[${spot.id}]" class="spot-position-input" value="${index + 1}">
-                        <div class="col-6 d-flex align-items-center gap-1 overflow-hidden">
-                            <i class="bi bi-grip-vertical text-muted fs-5 flex-shrink-0 drag-handle" style="cursor: grab;"></i>
-                            <span class="fw-bold text-primary spot-number flex-shrink-0">${index + 1}.</span> 
-                            <div class="text-truncate">
-                                <span class="text-dark fw-semibold small d-block text-truncate">${spot.name}</span>
-                                <small class="text-muted d-block" style="font-size: 10px;"><i class="bi bi-info-circle me-1"></i>${spot.duration}</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="input-group input-group-sm">
-                                <input type="number" name="duration_hrs[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="24" required oninput="validateTimeLimits()">
-                                <span class="input-group-text bg-white text-muted px-2" style="font-size: 11px;">hrs</span>
-                                <input type="number" name="duration_mins[${spot.id}]" class="form-control text-center px-1 no-spinners" placeholder="0" min="0" max="59" required oninput="validateTimeLimits()">
-                                <span class="input-group-text bg-white text-muted px-2" style="font-size: 11px;">mins</span>
-                            </div>
-                        </div>
-                    `;
-                    itineraryContainer.appendChild(row);
+                    const badge = document.createElement('span');
+                    badge.className = "badge bg-light text-dark border px-2 py-1 small fw-medium";
+                    badge.innerHTML = `<span class="text-primary me-1">${index + 1}.</span> ${spot.name}`;
+                    itineraryContainer.appendChild(badge);
                 });
-
-                if (sortableItineraryInstance) {
-                    sortableItineraryInstance.destroy();
-                }
-                sortableItineraryInstance = new Sortable(itineraryContainer, {
-                    animation: 150,
-                    handle: '.drag-handle',
-                    ghostClass: 'sortable-ghost',
-                    onEnd: function() {
-                        updateItineraryNumbers();
-                    }
-                });
-
             } else {
-                itineraryContainer.innerHTML =
-                    `<div class="text-center text-muted py-2 small"><i class="bi bi-info-circle me-1"></i> Custom itinerary or standard route stops.</div>`;
+                standardSpotsInfo.classList.add('d-none');
             }
 
             calculateTotal();

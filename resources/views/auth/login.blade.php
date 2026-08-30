@@ -1,58 +1,54 @@
 @extends('layouts.guest')
 
 @section('content')
-    <div class="mb-4">
-        <h4 class="fw-bold text-dark mb-1">Welcome back to ETRAV</h4>
+    <div class="text-center mb-4">
+        <img src="{{ asset('storage/logotext.png') }}" alt="ETRAV Logo" class="mb-3" style="height: 55px; object-fit: contain;">
+        <h4 class="fw-bold text-dark mb-1">Welcome Back</h4>
         <p class="text-muted small">Enter your administrative credentials to manage your ecosystem.</p>
     </div>
 
-    <form method="POST" action="{{ route('login') }}">
+    <form method="POST" action="{{ route('login') }}" class="px-md-2">
         @csrf
 
         <!-- Email Address -->
-        <div class="mb-3">
-            <label for="email" class="form-label text-muted small fw-bold mb-1">Email Address</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
-                <input id="email" type="email" name="email" class="form-control bg-light border-start-0"
-                    value="{{ old('email') }}" placeholder="name@example.com" required autofocus autocomplete="username">
-            </div>
+        <div class="form-floating mb-3">
+            <input id="email" type="email" name="email" class="form-control bg-light"
+                value="{{ old('email') }}" placeholder="name@example.com" required autofocus autocomplete="username">
+            <label for="email" class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</label>
         </div>
 
         <!-- Password -->
-        <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <label for="password" class="form-label text-muted small fw-bold mb-0">Password</label>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="small text-decoration-none text-primary"
-                        style="font-size: 12px;">Forgot password?</a>
-                @endif
-            </div>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
-                <input id="password" type="password" name="password" class="form-control bg-light border-start-0"
-                    placeholder="••••••••" required autocomplete="current-password">
-            </div>
+        <div class="form-floating mb-3">
+            <input id="password" type="password" name="password" class="form-control bg-light"
+                placeholder="••••••••" required autocomplete="current-password">
+            <label for="password" class="text-muted"><i class="bi bi-lock me-2"></i>Password</label>
         </div>
 
-        <!-- Remember Me Checkbox -->
-        <div class="mb-4 form-check">
-            <input id="remember_me" type="checkbox" name="remember" class="form-check-input">
-            <label for="remember_me" class="form-check-label text-muted small">Keep me signed in on this machine</label>
+        <!-- Remember Me & Forgot Password -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+                <input id="remember_me" type="checkbox" name="remember" class="form-check-input shadow-sm">
+                <label for="remember_me" class="form-check-label text-muted small fw-medium">Keep me signed in</label>
+            </div>
+            @if (Route::has('password.request'))
+                <a href="{{ route('password.request') }}" class="small text-decoration-none fw-semibold" style="color: #0d6efd;">
+                    Forgot password?
+                </a>
+            @endif
         </div>
 
         <!-- Action Button -->
-        <button type="submit" class="btn btn-primary w-100 rounded-pill btn-auth shadow-sm mb-3">
-            Sign In
+        <button type="submit" class="btn btn-primary w-100 rounded-pill btn-auth shadow-sm mb-3 fw-bold py-2">
+            Sign In to Dashboard
         </button>
 
-        <a href="{{ route('facebook.login') }}" class="btn btn-primary w-100">
-            <i class="bi bi-facebook"></i> Login with Facebook
+        <a href="{{ route('facebook.login') }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold py-2 mb-4">
+            <i class="bi bi-facebook me-1"></i> Continue with Facebook
         </a>
 
-        <p class="text-center text-muted small mb-0">
-            New to ETRAV? <a href="{{ route('register') }}" class="text-primary fw-semibold text-decoration-none">Create an
-                account</a>
-        </p>
+        <div class="text-center">
+            <span class="text-muted small">New to ETRAV?</span>
+            <a href="{{ route('register') }}" class="fw-bold text-decoration-none ms-1" style="color: #0d6efd;">Create an account</a>
+        </div>
     </form>
 @endsection

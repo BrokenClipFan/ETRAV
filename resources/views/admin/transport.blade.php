@@ -137,13 +137,13 @@
                                     <span class="badge bg-dark-subtle text-dark border border-dark-subtle"><i
                                             class="bi bi-slash-circle"></i> Unavail.</span>
                                 @else
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i
+                                    <span
+                                        class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i
                                             class="bi bi-dash-circle"></i> Retired</span>
                                 @endif
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small font-monospace"><i
-                                        class="bi bi-123 me-1"></i>{{ $vehicle->plate_number }}</span>
+                                <span class="text-muted small font-monospace">Plate: {{ $vehicle->plate_number }}</span>
                                 <span class="text-secondary small fw-medium"><i
                                         class="bi bi-people-fill me-1"></i>{{ $vehicle->capacity }}
                                     Pax</span>
@@ -394,17 +394,20 @@
             const currentModel = document.querySelector('input[name="model"]').value.trim();
             const currentPlate = document.querySelector('input[name="plate_number"]').value.trim();
 
-            if (currentBrand !== activeVehicle.brand || currentModel !== activeVehicle.model || currentPlate !== activeVehicle.plate_number) {
+            if (currentBrand !== activeVehicle.brand || currentModel !== activeVehicle.model || currentPlate !==
+                activeVehicle.plate_number) {
                 // Treated as creating a new vehicle because brand/model/plate changed
                 formElement.action = defaultAction;
                 document.getElementById('methodContainer').innerHTML = ''; // POST
-                document.getElementById('formHeader').innerHTML = '✨ Register New Vehicle <span class="badge bg-primary text-white ms-2" style="font-size:10px;">Duplicated</span>';
+                document.getElementById('formHeader').innerHTML =
+                    '✨ Register New Vehicle <span class="badge bg-primary text-white ms-2" style="font-size:10px;">Duplicated</span>';
                 document.getElementById('vehicleId').value = '';
                 toggleImageRequirement(true);
             } else {
                 // Restored back to original data, so back to Edit Mode
                 formElement.action = defaultAction.replace(/\/$/, '') + '/' + activeVehicle.id;
-                document.getElementById('methodContainer').innerHTML = '<input type="hidden" name="_method" value="PUT">'; // PUT
+                document.getElementById('methodContainer').innerHTML =
+                '<input type="hidden" name="_method" value="PUT">'; // PUT
                 document.getElementById('formHeader').innerHTML = '✏️ Edit Vehicle';
                 document.getElementById('vehicleId').value = activeVehicle.id;
                 toggleImageRequirement(false);
@@ -415,9 +418,9 @@
             document.querySelector('input[name="front_image"]').required = isRequired;
             document.querySelector('input[name="side_image"]').required = isRequired;
             document.querySelector('input[name="plate_image"]').required = isRequired;
-            
+
             document.querySelectorAll('.img-upload-box .text-muted').forEach(span => {
-                if(isRequired) {
+                if (isRequired) {
                     span.innerHTML = 'Upload <span class="text-danger">*</span>';
                 } else {
                     span.innerHTML = 'Upload <span class="text-secondary">(Optional)</span>';
@@ -439,10 +442,11 @@
 
             // Switch layout in column 2 (Form)
             document.getElementById('formHeader').innerHTML = '✏️ Edit Vehicle';
-            
+
             // Set form action to the update route (/admin/transport/{id})
-            formElement.action = defaultAction.replace(/\/$/, '') + '/' + vehicle.id; 
-            document.getElementById('methodContainer').innerHTML = '<input type="hidden" name="_method" value="PUT">'; // PUT
+            formElement.action = defaultAction.replace(/\/$/, '') + '/' + vehicle.id;
+            document.getElementById('methodContainer').innerHTML =
+            '<input type="hidden" name="_method" value="PUT">'; // PUT
 
             // Populate form fields
             document.getElementById('vehicleId').value = vehicle.id;
@@ -451,7 +455,7 @@
             document.querySelector('input[name="plate_number"]').value = vehicle.plate_number;
             document.querySelector('input[name="capacity"]').value = vehicle.capacity;
             document.querySelector('select[name="status"]').value = vehicle.status;
-            
+
             // In edit mode, images are not required
             toggleImageRequirement(false);
 
@@ -469,7 +473,7 @@
             const profileStatus = document.querySelector('#vehicleProfile .badge');
             let badgeClass = 'bg-secondary';
             let badgeHtml = '<i class="bi bi-dash-circle me-1"></i> Retired';
-            
+
             if (vehicle.status === 'active') {
                 badgeClass = 'bg-success';
                 badgeHtml = '<i class="bi bi-check-circle me-1"></i> Active';
@@ -492,9 +496,12 @@
             const plateView = document.getElementById('gallery-plate-view');
 
             // Reset image previews in column 3
-            frontView.innerHTML = `<i class="bi bi-image fs-1 opacity-25"></i><div class="mt-2 small">Front View Image</div>`;
-            sideView.innerHTML = `<i class="bi bi-image fs-2 opacity-25"></i><div class="mt-2 small" style="font-size: 11px;">Side View</div>`;
-            plateView.innerHTML = `<i class="bi bi-image fs-2 opacity-25"></i><div class="mt-2 small" style="font-size: 11px;">Plate Number Close-up</div>`;
+            frontView.innerHTML =
+                `<i class="bi bi-image fs-1 opacity-25"></i><div class="mt-2 small">Front View Image</div>`;
+            sideView.innerHTML =
+                `<i class="bi bi-image fs-2 opacity-25"></i><div class="mt-2 small" style="font-size: 11px;">Side View</div>`;
+            plateView.innerHTML =
+                `<i class="bi bi-image fs-2 opacity-25"></i><div class="mt-2 small" style="font-size: 11px;">Plate Number Close-up</div>`;
 
             if (vehicle.front_image_path) {
                 frontView.innerHTML =
@@ -508,7 +515,7 @@
                 plateView.innerHTML =
                     `<img src="${assetBaseUrl}${vehicle.plate_image_path}" class="gallery-img w-100 h-100 object-fit-cover">`;
             }
-            
+
             // Remove upload previews from the form
             document.querySelectorAll('.vehicle-img-preview').forEach(img => img.remove());
         }
@@ -523,7 +530,7 @@
 
             // Remove image previews
             document.querySelectorAll('.vehicle-img-preview').forEach(img => img.remove());
-            
+
             toggleImageRequirement(true);
 
             document.getElementById('formHeader').innerHTML = '✨ Register Vehicle';
@@ -531,7 +538,7 @@
             document.getElementById('noVehicleSelected').classList.remove('d-none');
             document.getElementById('vehicleProfile').classList.add('d-none');
         }
-        
+
         // Initialize as create mode
         toggleImageRequirement(true);
     </script>

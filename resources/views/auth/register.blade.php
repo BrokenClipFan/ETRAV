@@ -1,67 +1,63 @@
 @extends('layouts.guest')
 
 @section('content')
-    <div class="mb-4">
-        <h4 class="fw-bold text-dark mb-1">Get started with ETRAV</h4>
-        <p class="text-muted small">Create an account to start configuring backend system tools.</p>
+    <div class="text-center mb-4">
+        <img src="{{ asset('storage/logotext.png') }}" alt="ETRAV Logo" class="mb-3" style="height: 55px; object-fit: contain;">
+        <h4 class="fw-bold text-dark mb-1">Get Started</h4>
+        <p class="text-muted small">Create an account to start configuring your ecosystem.</p>
     </div>
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" class="px-md-2">
         @csrf
 
         <!-- Full Name -->
-        <div class="mb-3">
-            <label for="name" class="form-label text-muted small fw-bold mb-1">Full Name</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
-                <input id="name" type="text" name="name" class="form-control bg-light border-start-0" value="{{ old('name') }}" placeholder="John Doe" required autofocus autocomplete="name">
-            </div>
+        <div class="form-floating mb-3">
+            <input id="name" type="text" name="name" class="form-control bg-light" 
+                value="{{ old('name') }}" placeholder="John Doe" required autofocus autocomplete="name">
+            <label for="name" class="text-muted"><i class="bi bi-person me-2"></i>Full Name</label>
         </div>
 
         <!-- Email Address -->
-        <div class="mb-3">
-            <label for="email" class="form-label text-muted small fw-bold mb-1">Email Address</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
-                <input id="email" type="email" name="email" class="form-control bg-light border-start-0" value="{{ old('email') }}" placeholder="name@example.com" required autocomplete="username">
-            </div>
+        <div class="form-floating mb-3">
+            <input id="email" type="email" name="email" class="form-control bg-light" 
+                value="{{ old('email') }}" placeholder="name@example.com" required autocomplete="username">
+            <label for="email" class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</label>
         </div>
 
-        <!-- Phone Number Field -->
-        <div class="mb-3">
-            <label for="phone" class="form-label text-muted small fw-bold mb-1">Phone Number</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-telephone"></i></span>
-                <input id="phone" type="tel" name="phone_number" class="form-control bg-light border-start-0" value="{{ old('phone') }}" placeholder="09123456789" required autocomplete="tel">
-            </div>
+        <!-- Phone Number -->
+        <div class="form-floating mb-3">
+            <input id="phone" type="tel" name="phone_number" class="form-control bg-light" 
+                value="{{ old('phone_number') }}" placeholder="09123456789" required autocomplete="tel">
+            <label for="phone" class="text-muted"><i class="bi bi-telephone me-2"></i>Phone Number</label>
         </div>
 
         <!-- Passwords Grid -->
         <div class="row">
-            <div class="col-sm-6 mb-3">
-                <label for="password" class="form-label text-muted small fw-bold mb-1">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
-                    <input id="password" type="password" name="password" class="form-control bg-light border-start-0" placeholder="••••••••" required autocomplete="new-password">
+            <div class="col-sm-6 mb-4">
+                <div class="form-floating">
+                    <input id="password" type="password" name="password" class="form-control bg-light" 
+                        placeholder="••••••••" required autocomplete="new-password">
+                    <label for="password" class="text-muted"><i class="bi bi-lock me-2"></i>Password</label>
                 </div>
             </div>
             
-            <div class="col-sm-6 mb-3">
-                <label for="password_confirmation" class="form-label text-muted small fw-bold mb-1">Confirm Password</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-shield-check"></i></span>
-                    <input id="password_confirmation" type="password" name="password_confirmation" class="form-control bg-light border-start-0" placeholder="••••••••" required autocomplete="new-password">
+            <div class="col-sm-6 mb-4">
+                <div class="form-floating">
+                    <input id="password_confirmation" type="password" name="password_confirmation" class="form-control bg-light" 
+                        placeholder="••••••••" required autocomplete="new-password">
+                    <label for="password_confirmation" class="text-muted"><i class="bi bi-shield-check me-2"></i>Confirm Password</label>
                 </div>
             </div>
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" class="btn btn-success w-100 rounded-pill btn-auth shadow-sm mb-3">
-            Register Account
+        <button type="submit" class="btn btn-primary w-100 rounded-pill btn-auth shadow-sm mb-4 fw-bold py-2">
+            Create Account
         </button>
 
-        <p class="text-center text-muted small mb-0">
-            Already registered? <a href="{{ route('login') }}" class="text-primary fw-semibold text-decoration-none">Sign in here</a>
-        </p>
+        <div class="text-center">
+            <span class="text-muted small">Already registered?</span>
+            <a href="{{ route('login') }}" class="fw-bold text-decoration-none ms-1" style="color: #0d6efd;">Sign in here</a>
+        </div>
     </form>
 @endsection
