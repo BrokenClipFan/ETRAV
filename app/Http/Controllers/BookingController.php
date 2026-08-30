@@ -45,6 +45,17 @@ class BookingController extends Controller
 
         return view('bookings', compact('user', 'bookings'));
     }
+    
+    public function viewPackage(int $id) {
+        $package = Package::with('places')->findOrFail($id);
+        $packages = Package::all();
+        $vehicles = Transport::where('status', 'active')->get();
+        $places = Place::all();
+        $user = Auth::user();
+        $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
+
+        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification'));
+    }
 
     public function store(Request $request) {
 

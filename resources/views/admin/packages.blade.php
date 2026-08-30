@@ -243,8 +243,8 @@
                             <span>📍 Attached Itinerary Pipeline</span>
                             <span class="badge bg-primary rounded-pill font-monospace" id="spotCountBadge">0</span>
                         </label>
-                        <div id="selectedSpotsContainer"
-                            class="d-flex flex-column gap-2 p-2 bg-light rounded-3 border" style="min-height: 120px;">
+                        <div id="selectedSpotsContainer" class="d-flex flex-column gap-2 p-2 bg-light rounded-3 border"
+                            style="min-height: 120px;">
                             <span class="text-muted small text-center my-auto mx-auto id-empty-msg">Left-click existing
                                 map pins to build the itinerary chain loop sequence.</span>
                         </div>
@@ -782,7 +782,9 @@
                 image_url: sourceMasterItem.image_path,
                 latitude: parseFloat(sourceMasterItem.latitude),
                 longitude: parseFloat(sourceMasterItem.longitude),
-                position: activeItinerarySpots.length + 1
+                position: activeItinerarySpots.length + 1,
+                duration_hours: 1,
+                duration_minutes: 0
             });
 
             if (mapMarkersInstances[spotId]) mapMarkersInstances[spotId].closePopup();
@@ -803,14 +805,20 @@
                 activeItinerarySpots.forEach((spot, idx) => {
                     const row = document.createElement('div');
                     row.className =
-                        "d-flex justify-content-between align-items-center bg-white p-2 border rounded-3 spot-badge-item shadow-sm";
+                        "d-flex justify-content-between align-items-center bg-white p-2 border rounded-3 spot-badge-item shadow-sm flex-wrap gap-2";
                     row.innerHTML = `
-                        <div class="d-flex align-items-center gap-2" style="max-width: 80%;">
+                        <div class="d-flex align-items-center gap-2" style="max-width: 100%; flex: 1 1 auto;">
                             <span class="badge bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width:18px; height:18px; font-size:10px;">${spot.position}</span>
                             <img src="${spot.image_url || 'https://via.placeholder.com/150'}" class="rounded" style="width: 28px; height: 28px; object-fit: cover;">
                             <span class="small fw-semibold text-dark text-truncate" style="font-size:12px;">${spot.name}</span>
                         </div>
-                        <button type="button" class="btn p-0 border-0 text-danger" onclick="removeSpotFromItinerary(${idx})"><i class="bi bi-trash"></i></button>
+                        <div class="d-flex align-items-center gap-1">
+                            <input type="number" class="form-control form-control-sm text-center p-1 border-primary-subtle" style="width: 45px; font-size: 11px;" placeholder="Hrs" min="0" value="${spot.duration_hours || 0}" onchange="updateSpotDuration(${idx}, 'hours', this.value)">
+                            <span class="text-muted" style="font-size:10px;">h</span>
+                            <input type="number" class="form-control form-control-sm text-center p-1 border-primary-subtle" style="width: 45px; font-size: 11px;" placeholder="Min" min="0" max="59" value="${spot.duration_minutes || 0}" onchange="updateSpotDuration(${idx}, 'minutes', this.value)">
+                            <span class="text-muted" style="font-size:10px;">m</span>
+                            <button type="button" class="btn p-0 border-0 text-danger ms-2" onclick="removeSpotFromItinerary(${idx})"><i class="bi bi-trash"></i></button>
+                        </div>
                     `;
                     formContainer.appendChild(row);
                 });
@@ -858,12 +866,20 @@
             }
         }
 
-        function removeSpotFromItinerary(index) {
-            activeItinerarySpots.splice(index, 1);
-            activeItinerarySpots.forEach((spot, idx) => {
-                spot.position = idx + 1;
-            });
+        function removeSpotFromItinerary(idx) {
+            activeItinerarySpots.splice(idx, 1);
+            activeItinerarySpots.forEach((spot, i) => spot.position = i + 1);
             renderItineraryViews();
+        }
+
+        function updateSpotDuration(idx, type, value) {
+            if (activeItinerarySpots[idx]) {
+                if (type === 'hours') {
+                    activeItinerarySpots[idx].duration_hours = parseInt(value) || 0;
+                } else if (type === 'minutes') {
+                    activeItinerarySpots[idx].duration_minutes = parseInt(value) || 0;
+                }
+            }
         }
 
         function loadPackageToForm(packageData) {
@@ -895,13 +911,25 @@
                 });
 
                 sortedPlaces.forEach((place, index) => {
+                    let h = 1;
+                    let m = 0;
+                    if (place.pivot && place.pivot.duration) {
+                        const parts = String(place.pivot.duration).split(':');
+                        if (parts.length >= 2) {
+                            h = parseInt(parts[0]);
+                            m = parseInt(parts[1]);
+                        }
+                    }
+
                     activeItinerarySpots.push({
                         id: place.id,
                         name: place.name,
                         image_url: place.image_path,
                         latitude: parseFloat(place.latitude),
                         longitude: parseFloat(place.longitude),
-                        position: index + 1
+                        position: index + 1,
+                        duration_hours: h,
+                        duration_minutes: m
                     });
 
                     if (!isNaN(place.latitude) && !isNaN(place.longitude)) {
@@ -956,7 +984,8 @@
 
             const attachedPayloadData = activeItinerarySpots.map(spot => ({
                 id: spot.id,
-                position: spot.position
+                position: spot.position,
+                duration: `${String(spot.duration_hours || 0).padStart(2, '0')}:${String(spot.duration_minutes || 0).padStart(2, '0')}:00`
             }));
             document.getElementById('attachedSpotsPayload').value = JSON.stringify(attachedPayloadData);
 
@@ -1000,13 +1029,20 @@
             deleteForm.submit();
         }
 
-        document.getElementById('inputPax').addEventListener('input', (e) => updatePriceHead());
-        document.getElementById('inputPackagePrice').addEventListener('input', (e) => updatePriceHead());
+        const elInputPax = document.getElementById('inputPax');
+        const elInputPackagePrice = document.getElementById('inputPackagePrice');
+        if (elInputPax) elInputPax.addEventListener('input', (e) => updatePriceHead());
+        if (elInputPackagePrice) elInputPackagePrice.addEventListener('input', (e) => updatePriceHead());
 
         function updatePriceHead() {
-            const pax = document.getElementById('inputPax').value || 0;
-            const basePrice = document.getElementById('inputPackagePrice').value || 0;
+            const paxEl = document.getElementById('inputPax');
+            const priceEl = document.getElementById('inputPackagePrice');
             const perHeadInput = document.getElementById('inputPerHeadPrice');
+
+            if (!paxEl || !priceEl || !perHeadInput) return;
+
+            const pax = paxEl.value || 0;
+            const basePrice = priceEl.value || 0;
 
             if (pax > 0) {
                 perHeadInput.value = (basePrice / pax).toFixed(2);

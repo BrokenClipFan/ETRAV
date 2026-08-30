@@ -18,7 +18,7 @@ class Package extends Model
     public function places()
     {
         return $this->belongsToMany(Place::class, 'package_places')
-                    ->withPivot('position')
+                    ->withPivot('position', 'duration')
                     ->withTimestamps();
     }
     

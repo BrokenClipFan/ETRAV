@@ -13,6 +13,7 @@ class PackagePlace extends Model
         'package_id',
         'place_id',
         'position',
+        'duration',
     ];
 
     public function package() {

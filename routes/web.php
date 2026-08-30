@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function() {
     Route::get('/bookings/', [BookingController::class, 'view'])->name('bookings.view');
     Route::get('/dashboard/', [BookingController::class, 'view'])->name('dashboard');
     Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
+    Route::get('/package/{id}', [BookingController::class, 'viewPackage'])->name('package.book');
+
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

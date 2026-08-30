@@ -41,18 +41,17 @@ class PackageController extends Controller
         $spots = json_decode($request->input('attached_spot_ids'), true);
 
         if (is_array($spots)) {
-            // Prepare an array formatted for Laravel's sync/attach pivot system
-            // Format needed: [ place_id => ['pivot_column' => value] ]
             $pivotData = [];
-            
+
             foreach ($spots as $spot) {
                 $placeId = $spot['id'];
+
                 $pivotData[$placeId] = [
-                    'position' => $spot['position']
+                    'position' => $spot['position'],
+                    'duration' => $spot['duration'],
                 ];
             }
 
-            // 5. Sync attaches the data to the package_places table automatically
             $package->places()->sync($pivotData);
         }
 
@@ -98,8 +97,10 @@ class PackageController extends Controller
             
             foreach ($spots as $spot) {
                 $placeId = $spot['id'];
+
                 $pivotData[$placeId] = [
-                    'position' => $spot['position']
+                    'position' => $spot['position'],
+                    'duration' => $spot['duration'],
                 ];
             }
 
