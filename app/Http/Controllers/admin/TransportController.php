@@ -36,6 +36,7 @@ class TransportController extends Controller
             'model' => 'required|string|max:255',
             'plate_number' => 'required|string|max:255',
             'capacity' => 'required|integer',
+            'base_price' => 'nullable|numeric',
             'status' => 'required|string|max:255',
             'front_image' => 'required|image|mimes:jpeg,png,webp,avif,jpg',
             'side_image' => 'required|image|mimes:jpeg,png,webp,avif,jpg',
@@ -82,7 +83,6 @@ class TransportController extends Controller
      */
     public function update(Request $request, string $id)
     {
-
         $vehicle = Transport::FindOrFail($id);
 
         $validated = $request->validate([
@@ -90,6 +90,7 @@ class TransportController extends Controller
             'model' => 'nullable|string|max:255',
             'plate_number' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer',
+            'base_price' => 'nullable|numeric',
             'status' => 'nullable|string|max:255',
             'front_image' => 'nullable|image|mimes:jpeg,png,webp,avif,jpg',
             'side_image' => 'nullable|image|mimes:jpeg,png,webp,avif,jpg',

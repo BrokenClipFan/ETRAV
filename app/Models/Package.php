@@ -11,8 +11,6 @@ class Package extends Model
         'name',
         'type',
         'package_price',
-        'perhead_price',
-        'pax',
         'image_path',
         'description'
     ];

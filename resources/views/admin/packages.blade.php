@@ -218,20 +218,10 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-4 mb-2">
+                        <div class="col-12 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Base Price</label>
                             <input type="number" name="package_price" id="inputPackagePrice"
                                 class="form-control rounded-3 form-control-sm" min="0" required>
-                        </div>
-                        <div class="col-4 mb-2">
-                            <label class="form-label text-muted small fw-bold mb-1">Pax Limit</label>
-                            <input type="number" name="pax" id="inputPax"
-                                class="form-control rounded-3 form-control-sm" min="1" required>
-                        </div>
-                        <div class="col-4 mb-2">
-                            <label class="form-label text-muted small fw-bold mb-1">Price / Head</label>
-                            <input type="number" name="perhead_price" id="inputPerHeadPrice"
-                                class="form-control rounded-3 form-control-sm" min="0" required disabled>
                         </div>
                     </div>
 
@@ -886,8 +876,6 @@
             document.getElementById('inputName').value = packageData.name;
             document.getElementById('selectType').value = packageData.type || '';
             document.getElementById('inputPackagePrice').value = packageData.package_price;
-            document.getElementById('inputPerHeadPrice').value = packageData.perhead_price;
-            document.getElementById('inputPax').value = packageData.pax || 1;
             document.getElementById('textareaDescription').value = packageData.description || '';
 
             const submitBtn = document.getElementById('formSubmitBtn');

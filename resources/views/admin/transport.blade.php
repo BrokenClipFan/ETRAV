@@ -142,11 +142,14 @@
                                             class="bi bi-dash-circle"></i> Retired</span>
                                 @endif
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mt-2">
                                 <span class="text-muted small font-monospace">Plate: {{ $vehicle->plate_number }}</span>
-                                <span class="text-secondary small fw-medium"><i
-                                        class="bi bi-people-fill me-1"></i>{{ $vehicle->capacity }}
-                                    Pax</span>
+                                <div class="d-flex gap-2">
+                                    <span class="text-success small fw-medium"><i
+                                            class="bi bi-tag-fill me-1"></i>₱{{ number_format($vehicle->base_price ?? 0, 2) }}</span>
+                                    <span class="text-secondary small fw-medium"><i
+                                            class="bi bi-people-fill me-1"></i>{{ $vehicle->capacity }} Pax</span>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -212,21 +215,30 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label text-muted small fw-bold mb-1">Operational Status</label>
-                        <select class="form-select rounded-3" name="status" required>
-                            <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>🟢 Active /
-                                Available</option>
-                            <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>🟠
-                                Under Maintenance</option>
-                            <option value="unavailable" {{ old('status') == 'unavailable' ? 'selected' : '' }}>⚫
-                                Unavailable</option>
-                            <option value="retired" {{ old('status') == 'retired' ? 'selected' : '' }}>🔴 Retired /
-                                Out of Service</option>
-                        </select>
-                        @error('status')
-                            <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
-                        @enderror
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold mb-1">Base Price (₱)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white">₱</span>
+                                <input type="number" class="form-control rounded-3 border-start-0" name="base_price" min="0" step="0.01"
+                                    value="{{ old('base_price') }}" placeholder="0.00" required>
+                            </div>
+                            @error('base_price')
+                                <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold mb-1">Operational Status</label>
+                            <select class="form-select rounded-3" name="status" required>
+                                <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>🟢 Active</option>
+                                <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>🟠 Maint.</option>
+                                <option value="unavailable" {{ old('status') == 'unavailable' ? 'selected' : '' }}>⚫ Unavail.</option>
+                                <option value="retired" {{ old('status') == 'retired' ? 'selected' : '' }}>🔴 Retired</option>
+                            </select>
+                            @error('status')
+                                <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
 
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Verification Photos</h6>
@@ -301,9 +313,14 @@
                             <h3 class="fw-bold text-dark mb-0">Toyota Hiace Commuter</h3>
                             <span class="text-muted font-monospace fs-5">ABC 1234</span>
                         </div>
-                        <div class="text-end">
-                            <div class="fs-2 fw-bold text-primary">14</div>
-                            <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Max Pax
+                        <div class="d-flex gap-4 text-end">
+                            <div>
+                                <div class="fs-4 fw-bold text-success" id="profileBasePrice">₱0.00</div>
+                                <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Base Price</div>
+                            </div>
+                            <div>
+                                <div class="fs-3 fw-bold text-primary" id="profileMaxPax">14</div>
+                                <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Max Pax</div>
                             </div>
                         </div>
                     </div>
@@ -454,6 +471,7 @@
             document.querySelector('input[name="model"]').value = vehicle.model;
             document.querySelector('input[name="plate_number"]').value = vehicle.plate_number;
             document.querySelector('input[name="capacity"]').value = vehicle.capacity;
+            document.querySelector('input[name="base_price"]').value = vehicle.base_price || 0;
             document.querySelector('select[name="status"]').value = vehicle.status;
 
             // In edit mode, images are not required
@@ -466,8 +484,11 @@
             const profilePlate = document.querySelector('#vehicleProfile .font-monospace');
             profilePlate.innerText = vehicle.plate_number;
 
-            const profileCapacity = document.querySelector('#vehicleProfile .fs-2');
+            const profileCapacity = document.getElementById('profileMaxPax');
             profileCapacity.innerText = vehicle.capacity;
+            
+            const profileBasePrice = document.getElementById('profileBasePrice');
+            profileBasePrice.innerText = '₱' + parseFloat(vehicle.base_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             // Profile status badge
             const profileStatus = document.querySelector('#vehicleProfile .badge');

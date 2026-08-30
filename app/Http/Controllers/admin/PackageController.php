@@ -25,13 +25,10 @@ class PackageController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'package_price' => 'required|numeric',
-            'pax' => 'required|numeric',
             'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
             'description' => 'required|string|max:255',
             'attached_spot_ids' => 'required|string',
         ]);
-
-        $validated['perhead_price'] = $validated['package_price'] / $validated['pax'];
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('packages', 'public');
@@ -62,7 +59,7 @@ class PackageController extends Controller
         return redirect()->route('admin.packages')->with('success', 'A new package has been created');
     }
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, int $id) {
 
         $package = Package::findOrFail($id);
 
@@ -70,13 +67,10 @@ class PackageController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'package_price' => 'required|numeric',
-            'pax' => 'required|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'description' => 'required|string|max:255',
             'attached_spot_ids' => 'required|string',
         ]);
-
-        $validated['perhead_price'] = $validated['package_price'] / $validated['pax'];
 
         if ($request->hasFile('image')) {
     

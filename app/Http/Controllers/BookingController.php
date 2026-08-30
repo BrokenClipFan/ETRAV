@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Package;
 use App\Models\Place;
 use App\Models\Booking;
+use App\Models\Transport;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -16,13 +17,14 @@ class BookingController extends Controller
         $packages = Package::with('places')->get();
         $places = Place::all();
         $user = Auth::user();
+        $vehicles = Transport::all();
         
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('welcome', compact('packages', 'places', 'user', 'hasNotification'));
+        return view('welcome', compact('packages', 'places', 'user', 'vehicles', 'hasNotification'));
     }
 
-    public function turnOffNotification($id) 
+    public function turnOffNotification(int $id) 
     {
         $booking = Booking::findOrFail($id);
 
