@@ -169,6 +169,25 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
         }
+
+        /* Custom Dynamic Category Map Marker Pins */
+        .custom-category-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid white;
+            transition: transform 0.2s ease;
+        }
+
+        .custom-category-pin:hover {
+            transform: scale(1.15);
+        }
     </style>
 </head>
 
@@ -293,8 +312,12 @@
 
                                 <span
                                     class="position-absolute bottom-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7 opacity-90 d-flex align-items-center gap-1">
-                                    <i class="bi bi-cash-stack"></i> Base:
-                                    ₱{{ number_format($package->package_price ?? 0) }}
+                                    <i class="bi bi-cash-stack"></i> 
+                                    @if (($package->package_price ?? 0) > 0)
+                                        Base: ₱{{ number_format($package->package_price) }}
+                                    @else
+                                        Base: Price Varies
+                                    @endif
                                 </span>
                             </div>
 
@@ -303,8 +326,11 @@
                                     <h6 class="fw-bold text-dark mb-1 fs-6 text-truncate">{{ $package->name }}</h6>
                                     <p class="text-primary fw-semibold small mb-2 d-flex align-items-center gap-1">
                                         <i class="bi bi-person-check-fill"></i>
-                                        ₱{{ number_format($package->perhead_price ?? 0) }} <span
-                                            class="text-muted fw-normal">/ per head</span>
+                                        @if (($package->perhead_price ?? 0) > 0)
+                                            ₱{{ number_format($package->perhead_price) }} <span class="text-muted fw-normal">/ per head</span>
+                                        @else
+                                            <span class="text-muted fw-normal">Flexible Pricing</span>
+                                        @endif
                                     </p>
                                     <p class="text-muted mb-3"
                                         style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
@@ -477,8 +503,18 @@
                         {
                             id: {{ $place->id }},
                             name: {!! json_encode($place->name) !!},
+                            category: {!! json_encode($place->category ?? 'other') !!},
                             description: {!! json_encode($place->description ?? '') !!},
-                            duration: "{{ str_contains(strtolower($place->name), 'oslob') ? '3-4 Hours' : '1-2 Hours' }}",
+                            @php
+                                $dur = '1h 0m';
+                                if(isset($place->pivot) && $place->pivot->duration) {
+                                    $parts = explode(':', $place->pivot->duration);
+                                    if(count($parts) >= 2) {
+                                        $dur = (int)$parts[0] . 'h ' . (int)$parts[1] . 'm';
+                                    }
+                                }
+                            @endphp
+                            duration: {!! json_encode($dur) !!},
                             image: {!! json_encode($place->image_path ?? '') !!},
                             lat: {{ $place->latitude ?? ($place->lat ?? 0) }},
                             lng: {{ $place->longitude ?? ($place->lng ?? 0) }}
@@ -487,7 +523,31 @@
                 ]
             };
         @endforeach
+        const categoryConfig = {
+            'swimming': { icon: 'bi-water', bg: '#0dcaf0' },
+            'mountain': { icon: 'bi-tree-fill', bg: '#198754' },
+            'restaurant': { icon: 'bi-cup-hot-fill', bg: '#fd7e14' },
+            'terminal': { icon: 'bi-bus-front-fill', bg: '#6f42c1' },
+            'water falls': { icon: 'bi-tsunami', bg: '#0d6efd' },
+            'other': { icon: 'bi-geo-alt-fill', bg: '#6c757d' },
+            'custom': { icon: 'bi-pin-map-fill', bg: '#dc3545' }
+        };
 
+        function getCategoryDetails(categoryKey) {
+            const key = (categoryKey || '').toLowerCase();
+            return categoryConfig[key] || { icon: 'bi-geo-alt-fill', bg: '#0d6efd' };
+        }
+
+        function createCategoryPinIcon(categoryKey) {
+            const config = getCategoryDetails(categoryKey);
+            return L.divIcon({
+                className: 'custom-pin-wrapper',
+                html: `<div class="custom-category-pin" style="background-color: ${config.bg};"><i class="bi ${config.icon}"></i></div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -34]
+            });
+        }
         const vehiclesData = {};
         @foreach ($vehicles as $vehicle)
             vehiclesData[{{ $vehicle->id }}] = {
@@ -521,12 +581,13 @@
                         </div>
                     `;
 
-                    var marker = L.marker([spot.lat, spot.lng]).addTo(map).bindPopup(popupContent);
+                    const customIcon = createCategoryPinIcon(spot.category);
+                    var marker = L.marker([spot.lat, spot.lng], {icon: customIcon}).addTo(map).bindPopup(popupContent);
                     marker.bindTooltip(spot.name, {
                         permanent: true,
                         direction: 'top',
                         className: 'custom-pin-label',
-                        offset: [-15, -15]
+                        offset: [0, -36]
                     });
 
                     marker.on('click', function() {
@@ -583,12 +644,13 @@
                     </div>
                 `;
 
-                var marker = L.marker([spot.lat, spot.lng]).addTo(map).bindPopup(popupContent);
-                marker.bindTooltip(`Stop ${index + 1}: ${spot.name}`, {
+                const customIcon = createCategoryPinIcon(spot.category);
+                var marker = L.marker([spot.lat, spot.lng], {icon: customIcon}).addTo(map).bindPopup(popupContent);
+                marker.bindTooltip((index + 1) + '. ' + spot.name, {
                     permanent: true,
                     direction: 'top',
                     className: 'custom-pin-label',
-                    offset: [0, -5]
+                    offset: [0, -36]
                 });
 
                 currentMarkers.push(marker);

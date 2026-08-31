@@ -12,6 +12,8 @@ class Transport extends Model
         'plate_number',
         'capacity',
         'base_price',
+        'interval_rate',
+        'pricing_distance',
         'status',
         'front_image_path',
         'side_image_path',

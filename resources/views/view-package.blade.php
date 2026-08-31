@@ -248,7 +248,7 @@
         <div class="row h-100 g-0">
 
             <!-- LEFT SIDEBAR -->
-            <div class="col-12 col-md-4 sidebar-scroll p-0 bg-white border-end d-flex flex-column" style="height: calc(100vh - 55px);">
+            <div class="col-12 col-md-4 sidebar-scroll p-0 bg-light border-end d-flex flex-column" style="height: calc(100vh - 55px);">
                 <div class="p-3 bg-primary text-white shadow-sm z-1">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
@@ -275,7 +275,7 @@
                         </div>
                     @endif
 
-                    <div class="p-3 bg-light border rounded-3 mb-3">
+                    <div class="p-3 bg-white border border-top border-primary border-4 rounded-4 shadow-sm mb-4">
                         <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2" id="modalPackageName">
                             <i class="bi bi-box-seam text-primary"></i> {{ $package->name ?? 'Tour Package' }}
                         </h6>
@@ -288,41 +288,51 @@
                         </div>
                     </div>
 
-                    <div class="mb-3 p-3 bg-white border rounded-3 shadow-sm" id="standardSpotsInfo">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold text-dark small mb-0"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Included Stops (Draggable):</h6>
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold text-dark small mb-3 border-bottom pb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Itinerary Details</h6>
+                        
+                        <!-- Pickup Location -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-muted small d-block">
+                                <i class="bi bi-geo-alt me-1 text-primary"></i> Pickup Location
+                            </label>
+                            <div class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) border-danger @endif shadow-sm">
+                                <div class="d-flex align-items-center gap-2 overflow-hidden me-2" style="min-width: 0;">
+                                    <i class="bi bi-geo-alt-fill text-warning fs-5 flex-shrink-0"></i>
+                                    <span class="small text-muted text-truncate d-inline-block" id="pickupCoordinatesPlaceholder" style="max-width: 240px;" title="No pickup location selected on map">
+                                        @if (old('pickup_latitude') && old('pickup_longitude'))
+                                            Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
+                                        @else
+                                            Choose on the map
+                                        @endif
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0 d-flex align-items-center gap-1" onclick="startPickupMapMapping()">
+                                    <i class="bi bi-pin-map"></i> Set
+                                </button>
+                            </div>
+                            @error('pickup_latitude')
+                                <div class="text-danger small mt-1 d-flex align-items-center gap-1" style="font-size: 11px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Please select a pickup point on the map.
+                                </div>
+                            @enderror
                         </div>
-                        <div id="modalItineraryContainer" class="d-flex flex-column gap-2">
-                            <!-- Spots will be injected here via JS to allow dragging -->
+
+                        <div class="p-3 bg-white border rounded-3 shadow-sm" id="standardSpotsInfo">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-dark small mb-0"><i class="bi bi-map text-success me-1"></i> Included Stops (Draggable):</h6>
+                            </div>
+                            <div id="modalItineraryContainer" class="d-flex flex-column gap-2">
+                                <!-- Spots will be injected here via JS to allow dragging -->
+                            </div>
+                        </div>
                         </div>
                     </div>
 
-                    <!-- Pickup Location -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-muted small d-block">
-                            <i class="bi bi-geo-alt me-1 text-primary"></i> Pickup Location
-                        </label>
-                        <div class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) border-danger @endif">
-                            <div class="d-flex align-items-center gap-2 overflow-hidden me-2" style="min-width: 0;">
-                                <i class="bi bi-geo-alt-fill text-warning fs-5 flex-shrink-0"></i>
-                                <span class="small text-muted text-truncate d-inline-block" id="pickupCoordinatesPlaceholder" style="max-width: 240px;" title="No pickup location selected on map">
-                                    @if (old('pickup_latitude') && old('pickup_longitude'))
-                                        Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
-                                    @else
-                                        Choose on the map
-                                    @endif
-                                </span>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0 d-flex align-items-center gap-1" onclick="startPickupMapMapping()">
-                                <i class="bi bi-pin-map"></i> Set
-                            </button>
-                        </div>
-                        @error('pickup_latitude')
-                            <div class="text-danger small mt-1 d-flex align-items-center gap-1" style="font-size: 11px;">
-                                <i class="bi bi-exclamation-circle-fill"></i> Please select a pickup point on the map.
-                            </div>
-                        @enderror
-                    </div>
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold text-dark small mb-3 border-bottom pb-2"><i class="bi bi-calendar-check text-primary me-1"></i> Booking Details</h6>
 
                     <!-- Date & Time -->
                     <div class="row g-2 mb-3">
@@ -382,32 +392,62 @@
                         </div>
                     </div>
 
-                    <div class="bg-light p-3 rounded-3 mb-4" style="font-size: 13px;">
-                        <div class="d-flex justify-content-between mb-1 text-muted">
-                            <span><i class="bi bi-info-circle me-1"></i> Type:</span>
-                            <span id="breakdownBase">Private Tour</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-1 text-muted">
-                            <span><i class="bi bi-calculator me-1"></i> Breakdown:</span>
-                            <span id="breakdownHeads">1 head</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2 text-primary fw-semibold bg-primary-subtle p-2 rounded-2" style="font-size: 12px;">
-                            <span><i class="bi bi-person-fill me-1"></i> Cost Per Person:</span>
-                            <span id="breakdownPerPerson">₱0.00 / person</span>
-                        </div>
-                        <div class="d-flex justify-content-between border-top pt-2 fw-bold text-dark fs-6 mb-2">
-                            <span>Total (Group):</span>
-                            <span id="modalTotalPrice">₱0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center border-top pt-2">
-                            <div class="text-primary fw-bold" style="font-size: 12px;">
-                                <span>25% Deposit:</span>
-                            </div>
-                            <span class="fs-5 fw-black text-primary fw-bold" id="modalDownpaymentPrice">₱0.00</span>
                         </div>
                     </div>
+
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold text-dark small mb-3 border-bottom pb-2"><i class="bi bi-receipt text-success me-1"></i> Pricing & Summary</h6>
+                        
+                        <div class="bg-light p-3 rounded-3 mb-4 border shadow-sm" style="font-size: 14px;">
+                            <div class="d-flex justify-content-between mb-2 text-dark">
+                                <span><i class="bi bi-info-circle me-1 text-primary"></i> Tour Type:</span>
+                                <span class="fw-medium" id="breakdownBase">Private Tour</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 text-dark">
+                                <span><i class="bi bi-geo-alt-fill me-1 text-danger"></i> Trip Distance:</span>
+                                <span class="fw-medium" id="breakdownDistance">0.0 km</span>
+                            </div>
+
+                            <div class="border-top border-bottom py-2 my-2 bg-white rounded-3 px-2 shadow-sm">
+                                <span class="fw-bold text-dark d-block mb-1" style="font-size: 13px;"><i class="bi bi-tag-fill text-success me-1"></i> Price Details</span>
+                                <div class="d-flex justify-content-between mt-1 text-muted" id="breakdownPackageRateRow">
+                                    <span class="ps-2">Package Fee:</span>
+                                    <span class="fw-medium text-dark" id="breakdownPackageRate">₱0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1 text-muted">
+                                    <span class="ps-2">Vehicle Fee:</span>
+                                    <span class="fw-medium text-dark" id="breakdownVehicleFare">₱0.00</span>
+                                </div>
+                                <div class="ps-2 text-secondary fst-italic lh-sm mt-1" style="font-size: 11px;" id="breakdownVehicleCalculation">
+                                    (Base rate + Extra distance fee)
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2 text-dark mt-2">
+                                <span><i class="bi bi-people-fill me-1 text-primary"></i> Number of People:</span>
+                                <span class="fw-medium" id="breakdownHeads">1 head</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 text-primary fw-bold bg-primary-subtle p-2 rounded-2" style="font-size: 13px;">
+                                <span><i class="bi bi-person-bounding-box me-1"></i> Cost Per Person:</span>
+                                <span id="breakdownPerPerson">₱0.00 / person</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between border-top pt-3 fw-bold text-dark fs-5 mb-2">
+                                <span>Grand Total:</span>
+                                <span class="text-success" id="modalTotalPrice">₱0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center bg-warning-subtle p-2 rounded-2 border border-warning-subtle">
+                                <div class="text-dark fw-bold" style="font-size: 13px;">
+                                    <i class="bi bi-cash-coin me-1 fs-6"></i> Pay Now (25% Deposit):
+                                </div>
+                                <span class="fs-5 fw-black text-dark" id="modalDownpaymentPrice">₱0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                     
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-medium d-flex align-items-center justify-content-center gap-2 shadow-sm sticky-bottom" style="bottom: 0;">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;">
                         <i class="bi bi-credit-card"></i> Proceed to Payment
                     </button>
                 </form>
@@ -417,6 +457,14 @@
             <div class="col-12 col-md-8 p-3 bg-light position-relative d-none d-md-block">
                 <div class="map-container">
                     <!-- Map Custom Control for adding pins -->
+                    <div style="position: absolute; top: 12px; left: 60px; z-index: 1000; max-width: 320px; width: 100%;">
+                        <div class="input-group shadow-sm rounded-pill overflow-hidden border bg-white">
+                            <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="mapSearchInput" class="form-control border-0 shadow-none" style="font-size: 13px;" placeholder="Search a place to find it..." onkeydown="if(event.key === 'Enter') searchMapPlace()">
+                            <button class="btn btn-primary border-0 px-3 fw-medium" style="font-size: 13px;" type="button" onclick="searchMapPlace()">Go</button>
+                        </div>
+                    </div>
+
                     <div class="dropdown" style="position: absolute; top: 12px; right: 12px; z-index: 1000;">
                         <button type="button" class="btn btn-sm btn-light border shadow-sm dropdown-toggle fw-bold" style="border-radius: 8px;" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-pin-map-fill text-success me-1"></i> Add Stop
@@ -551,6 +599,7 @@
 
         let activeBasePrice = 0;
         let activePaxLimit = 10;
+        let totalRouteDistance = 0;
 
         const packageData = {
             "{{ $package->id ?? 0 }}": {
@@ -608,6 +657,8 @@
                 id: {{ $vehicle->id }},
                 name: {!! json_encode($vehicle->brand . ' ' . $vehicle->model) !!},
                 base_price: {{ $vehicle->base_price ?? 0 }},
+                interval_rate: {{ $vehicle->interval_rate ?? 0 }},
+                pricing_distance: {{ $vehicle->pricing_distance ?? 5000 }},
                 capacity: {{ $vehicle->capacity ?? 10 }}
             };
         @endforeach
@@ -957,7 +1008,20 @@
                     dashArray: '8, 8',
                     lineJoin: 'round'
                 }).addTo(map);
+
+                // Calculate distance
+                totalRouteDistance = 0;
+                for (let i = 0; i < routeCoordinates.length - 1; i++) {
+                    const p1 = L.latLng(routeCoordinates[i][0], routeCoordinates[i][1]);
+                    const p2 = L.latLng(routeCoordinates[i+1][0], routeCoordinates[i+1][1]);
+                    totalRouteDistance += p1.distanceTo(p2);
+                }
+            } else {
+                totalRouteDistance = 0;
             }
+            
+            // Recalculate price if distance influences it
+            calculateTotal();
 
             document.getElementById('spotCount').innerText = selectedPackage.spots.length;
             document.getElementById('spotsPanel').classList.remove('d-none');
@@ -1093,11 +1157,24 @@
                         </button>`;
                     }
 
+                    let h = 1; let m = 0;
+                    const durMatch = String(spot.duration || '').match(/(\d+)h\s*(\d+)m/);
+                    if (durMatch) {
+                        h = parseInt(durMatch[1]);
+                        m = parseInt(durMatch[2]);
+                    }
+
                     badge.innerHTML = `
-                        <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                        <div class="d-flex align-items-center flex-grow-1 overflow-hidden" style="max-width: 50%;">
                             <i class="bi bi-grip-vertical text-muted me-2"></i>
                             <span class="text-primary me-2">${index + 1}.</span> 
                             <span class="text-truncate">${spot.name}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                            <input type="number" class="form-control form-control-sm text-center p-1 border-primary-subtle" style="width: 40px; font-size: 10px;" placeholder="H" min="0" value="${h}" onchange="updateSpotDuration('${spot.id}', 'hours', this.value)">
+                            <span class="text-muted" style="font-size:9px;">h</span>
+                            <input type="number" class="form-control form-control-sm text-center p-1 border-primary-subtle" style="width: 40px; font-size: 10px;" placeholder="M" min="0" max="59" value="${m}" onchange="updateSpotDuration('${spot.id}', 'minutes', this.value)">
+                            <span class="text-muted" style="font-size:9px;">m</span>
                         </div>
                         ${editBtnHtml}
                         <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="removePlaceFromItinerary('${spot.id}')" title="Remove spot">
@@ -1110,6 +1187,12 @@
                     input.name = 'spots_order[]';
                     input.value = spot.id;
                     badge.appendChild(input);
+
+                    const durInput = document.createElement('input');
+                    durInput.type = 'hidden';
+                    durInput.name = `spots_duration[${spot.id}]`;
+                    durInput.value = spot.duration;
+                    badge.appendChild(durInput);
 
                     itineraryContainer.appendChild(badge);
                 });
@@ -1157,6 +1240,26 @@
             }
 
             calculateTotal();
+        }
+
+        function updateSpotDuration(spotId, type, value) {
+            const activePackageId = "{{ $package->id ?? 0 }}";
+            if (!packageData[activePackageId]) return;
+            const spot = packageData[activePackageId].spots.find(s => String(s.id) === String(spotId));
+            if (!spot) return;
+
+            let h = 1; let m = 0;
+            const durMatch = String(spot.duration || '').match(/(\d+)h\s*(\d+)m/);
+            if (durMatch) {
+                h = parseInt(durMatch[1]);
+                m = parseInt(durMatch[2]);
+            }
+
+            if (type === 'hours') h = parseInt(value) || 0;
+            if (type === 'minutes') m = parseInt(value) || 0;
+
+            spot.duration = `${h}h ${m}m`;
+            focusOnPackageRoute(activePackageId);
         }
 
         function openVehicleModal() {
@@ -1255,10 +1358,26 @@
             
             let vehiclePrice = 0;
             let currentPaxLimit = activePaxLimit;
+            let currentPricingDistance = 5000;
+            let baseVehiclePrice = 0;
+            let intervalRate = 0;
+            let distanceMultiplier = 1;
+            let additionalIntervals = 0;
 
             if (vehicleSelect && vehicleSelect.value && vehiclesData[vehicleSelect.value]) {
                 const selectedVehicle = vehiclesData[vehicleSelect.value];
-                vehiclePrice = parseFloat(selectedVehicle.base_price) || 0;
+                baseVehiclePrice = parseFloat(selectedVehicle.base_price) || 0;
+                intervalRate = parseFloat(selectedVehicle.interval_rate) || 0;
+                currentPricingDistance = parseFloat(selectedVehicle.pricing_distance) || 5000;
+                
+                // Calculate multiplier based on distance
+                if (totalRouteDistance > 0) {
+                    distanceMultiplier = Math.ceil(totalRouteDistance / currentPricingDistance);
+                    if (distanceMultiplier < 1) distanceMultiplier = 1; // Minimum 1 interval
+                }
+                
+                additionalIntervals = distanceMultiplier > 0 ? distanceMultiplier - 1 : 0;
+                vehiclePrice = baseVehiclePrice + (intervalRate * additionalIntervals);
                 currentPaxLimit = parseInt(selectedVehicle.capacity) || 10;
             }
             
@@ -1296,18 +1415,65 @@
                 perHeadLabel.innerText = formatCurrency(perHeadRate);
             }
             document.getElementById('modalBasePriceLabel').innerText = formatCurrency(totalBasePrice);
+            
+            const distanceKm = (totalRouteDistance / 1000).toFixed(1);
+            document.getElementById('breakdownDistance').innerText = `${distanceKm} km`;
+
+            document.getElementById('breakdownPackageRate').innerText = formatCurrency(activeBasePrice);
+            document.getElementById('breakdownVehicleFare').innerText = formatCurrency(vehiclePrice);
+            if (additionalIntervals > 0) {
+                document.getElementById('breakdownVehicleCalculation').innerText = `(Includes ${formatCurrency(baseVehiclePrice)} base rate + ${formatCurrency(intervalRate)} × ${additionalIntervals} extra distance charges)`;
+            } else {
+                document.getElementById('breakdownVehicleCalculation').innerText = `(Base rate only, no extra distance charges)`;
+            }
+            
+            if (activeBasePrice <= 0) {
+                document.getElementById('breakdownPackageRateRow').style.display = 'none';
+            } else {
+                document.getElementById('breakdownPackageRateRow').style.display = 'flex';
+            }
 
             document.getElementById('breakdownBase').innerText = isJoinerAllowed ?
-                `Joiner Mode (${headsCount}/${currentPaxLimit} slots)` :
-                'Private Tour (Full Base)';
+                `Joiner / Open Group (${headsCount} of ${currentPaxLimit} slots)` :
+                'Private / Exclusive Group';
 
             document.getElementById('breakdownHeads').innerText = isJoinerAllowed ?
-                `${headsCount} head(s) @ ${formatCurrency(perHeadRate)}/head` :
-                `${headsCount} head(s) splitting ${formatCurrency(totalBasePrice)}`;
+                `${headsCount} people (@ ${formatCurrency(perHeadRate)} each)` :
+                `${headsCount} people (splitting the total)`;
 
             document.getElementById('breakdownPerPerson').innerText = `${formatCurrency(costPerPerson)} / person`;
             document.getElementById('modalTotalPrice').innerText = formatCurrency(totalToPay);
             document.getElementById('modalDownpaymentPrice').innerText = formatCurrency(downpaymentRequired);
+        }
+
+        function searchMapPlace() {
+            const query = document.getElementById('mapSearchInput').value.trim();
+            if (!query) return;
+            
+            // Force the search to prioritize Cebu, Philippines
+            let finalQuery = query;
+            if (!finalQuery.toLowerCase().includes('cebu')) {
+                finalQuery += ', Cebu';
+            }
+            if (!finalQuery.toLowerCase().includes('philippines')) {
+                finalQuery += ', Philippines';
+            }
+            
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalQuery)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        map.flyTo([lat, lon], 14, { animate: true, duration: 1.5 });
+                    } else {
+                        alert("Place not found. Try being more specific (e.g., adding city or country).");
+                    }
+                })
+                .catch(err => {
+                    console.error("Geocoding error", err);
+                    alert("Failed to search place due to a network error.");
+                });
         }
 
         window.onload = function() {

@@ -24,8 +24,6 @@
             align-items: center;
             justify-content: center;
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             margin: 0;
             padding: 0;
         }
@@ -103,6 +101,7 @@
         .pin-wrapper {
             position: relative;
             animation: mapPulse 2s infinite ease-in-out;
+            will-change: transform;
         }
         @keyframes mapPulse {
             0%, 100% { transform: translateY(0); }

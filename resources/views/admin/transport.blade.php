@@ -205,8 +205,9 @@
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold mb-1">Max Capacity</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-people"></i></span>
-                                <input type="number" class="form-control rounded-3" name="capacity" min="1"
+                                <span class="input-group-text bg-white rounded-start-3"><i
+                                        class="bi bi-people"></i></span>
+                                <input type="number" class="form-control rounded-end-3" name="capacity" min="1"
                                     value="{{ old('capacity', 4) }}" required>
                             </div>
                             @error('capacity')
@@ -215,25 +216,58 @@
                         </div>
                     </div>
 
-                    <div class="row g-2 mb-4">
+                    <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold mb-1">Base Price (₱)</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white">₱</span>
-                                <input type="number" class="form-control rounded-3 border-start-0" name="base_price" min="0" step="0.01"
-                                    value="{{ old('base_price') }}" placeholder="0.00" required>
+                                <span class="input-group-text bg-white rounded-start-3">₱</span>
+                                <input type="number" class="form-control rounded-end-3" name="base_price"
+                                    min="0" step="0.01" value="{{ old('base_price') }}"
+                                    placeholder="0.00" required>
                             </div>
                             @error('base_price')
                                 <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
                             @enderror
                         </div>
                         <div class="col-6">
+                            <label class="form-label text-muted small fw-bold mb-1">Interval Rate (₱)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white rounded-start-3">₱</span>
+                                <input type="number" class="form-control rounded-end-3" name="interval_rate"
+                                    min="0" step="0.01" value="{{ old('interval_rate', 0) }}"
+                                    placeholder="0.00" required>
+                            </div>
+                            @error('interval_rate')
+                                <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold mb-1"
+                                title="The distance for each additional interval rate.">Interval Distance (m)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white rounded-start-3"><i class="bi bi-geo-alt"></i></span>
+                                <input type="number" class="form-control rounded-end-3" name="pricing_distance"
+                                    min="1" value="{{ old('pricing_distance', 5000) }}"
+                                    placeholder="e.g., 5000" required>
+                            </div>
+                            @error('pricing_distance')
+                                <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="col-6">
                             <label class="form-label text-muted small fw-bold mb-1">Operational Status</label>
                             <select class="form-select rounded-3" name="status" required>
-                                <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>🟢 Active</option>
-                                <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>🟠 Maint.</option>
-                                <option value="unavailable" {{ old('status') == 'unavailable' ? 'selected' : '' }}>⚫ Unavail.</option>
-                                <option value="retired" {{ old('status') == 'retired' ? 'selected' : '' }}>🔴 Retired</option>
+                                <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>🟢 Active
+                                </option>
+                                <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>🟠
+                                    Maint.</option>
+                                <option value="unavailable" {{ old('status') == 'unavailable' ? 'selected' : '' }}>⚫
+                                    Unavail.</option>
+                                <option value="retired" {{ old('status') == 'retired' ? 'selected' : '' }}>🔴 Retired
+                                </option>
                             </select>
                             @error('status')
                                 <span class="text-danger small" style="font-size: 11px;">{{ $message }}</span>
@@ -313,13 +347,21 @@
                             <h3 class="fw-bold text-dark mb-0">Toyota Hiace Commuter</h3>
                             <span class="text-muted font-monospace fs-5">ABC 1234</span>
                         </div>
-                        <div class="d-flex gap-4 text-end">
+                        <div class="d-flex gap-3 text-end">
                             <div>
-                                <div class="fs-4 fw-bold text-success" id="profileBasePrice">₱0.00</div>
-                                <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Base Price</div>
+                                <div class="fs-5 fw-bold text-success" id="profileBasePrice">₱0.00</div>
+                                <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Base</div>
                             </div>
                             <div>
-                                <div class="fs-3 fw-bold text-primary" id="profileMaxPax">14</div>
+                                <div class="fs-5 fw-bold text-warning" id="profileIntervalRate">₱0.00</div>
+                                <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Per Dist.</div>
+                            </div>
+                            <div>
+                                <div class="fs-5 fw-bold text-info" id="profilePricingDistance">5000m</div>
+                                <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Interval</div>
+                            </div>
+                            <div>
+                                <div class="fs-5 fw-bold text-primary" id="profileMaxPax">14</div>
                                 <div class="small text-muted fw-bold text-uppercase" style="font-size: 10px;">Max Pax</div>
                             </div>
                         </div>
@@ -424,7 +466,7 @@
                 // Restored back to original data, so back to Edit Mode
                 formElement.action = defaultAction.replace(/\/$/, '') + '/' + activeVehicle.id;
                 document.getElementById('methodContainer').innerHTML =
-                '<input type="hidden" name="_method" value="PUT">'; // PUT
+                    '<input type="hidden" name="_method" value="PUT">'; // PUT
                 document.getElementById('formHeader').innerHTML = '✏️ Edit Vehicle';
                 document.getElementById('vehicleId').value = activeVehicle.id;
                 toggleImageRequirement(false);
@@ -463,7 +505,7 @@
             // Set form action to the update route (/admin/transport/{id})
             formElement.action = defaultAction.replace(/\/$/, '') + '/' + vehicle.id;
             document.getElementById('methodContainer').innerHTML =
-            '<input type="hidden" name="_method" value="PUT">'; // PUT
+                '<input type="hidden" name="_method" value="PUT">'; // PUT
 
             // Populate form fields
             document.getElementById('vehicleId').value = vehicle.id;
@@ -472,6 +514,8 @@
             document.querySelector('input[name="plate_number"]').value = vehicle.plate_number;
             document.querySelector('input[name="capacity"]').value = vehicle.capacity;
             document.querySelector('input[name="base_price"]').value = vehicle.base_price || 0;
+            document.querySelector('input[name="interval_rate"]').value = vehicle.interval_rate || 0;
+            document.querySelector('input[name="pricing_distance"]').value = vehicle.pricing_distance || 5000;
             document.querySelector('select[name="status"]').value = vehicle.status;
 
             // In edit mode, images are not required
@@ -486,9 +530,21 @@
 
             const profileCapacity = document.getElementById('profileMaxPax');
             profileCapacity.innerText = vehicle.capacity;
-            
+
             const profileBasePrice = document.getElementById('profileBasePrice');
-            profileBasePrice.innerText = '₱' + parseFloat(vehicle.base_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            profileBasePrice.innerText = '₱' + parseFloat(vehicle.base_price || 0).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            const profileIntervalRate = document.getElementById('profileIntervalRate');
+            profileIntervalRate.innerText = '₱' + parseFloat(vehicle.interval_rate || 0).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            const profilePricingDistance = document.getElementById('profilePricingDistance');
+            profilePricingDistance.innerText = (vehicle.pricing_distance || 5000) + 'm';
 
             // Profile status badge
             const profileStatus = document.querySelector('#vehicleProfile .badge');
