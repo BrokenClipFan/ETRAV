@@ -21,6 +21,8 @@ return new class extends Migration
             $table->rememberToken();
             $table->string('provider_id')->nullable();
             $table->string('provider')->nullable();
+            $table->boolean('is_admin')->default(false);
+            $table->string('phone_number')->nullable();
 
             $table->timestamps();
         });

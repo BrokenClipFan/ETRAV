@@ -21,4 +21,8 @@ class Place extends Model
     public function packages() {
         return $this->hasMany(PackagePlace::class, 'place_id');
     }
+
+    public function bookingPlaces() {
+        return $this->hasMany(BookingPlace::class, 'place_id');
+    }
 }

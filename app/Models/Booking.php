@@ -11,14 +11,17 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'package_id',
+        'vehicle_id',
         'pickup_datetime',
         'latitude',
         'longitude',
         'pickup_place_name',
         'pax',
+        'distance',
         'total_price',
         'head_price',
         'deposit_amount',
+        'amount_paid',
         'joiners',
         'status',
         'notify',
@@ -39,5 +42,15 @@ class Booking extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Transport::class, 'vehicle_id');
+    }
+
+    public function itinerary()
+    {
+        return $this->hasMany(BookingPlace::class)->orderBy('id');
     }
 }

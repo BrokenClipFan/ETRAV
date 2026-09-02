@@ -137,209 +137,85 @@
             <div class="bg-white border rounded-3 p-1 shadow-sm d-flex gap-1 flex-wrap">
                 <button class="btn btn-sm btn-primary rounded-2 px-3 filter-btn" data-filter="all">All Bookings</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="pending">Pending</button>
-                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="confirmed">Confirmed</button>
+                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="approved">Approved</button>
+                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="confirmed">Paid</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="completed">Completed</button>
             </div>
         </div>
 
-        <div class="row g-3" id="manifestGrid">
-            @forelse($bookings as $booking)
-                <div class="col-12 col-xl-6 booking-card-item" data-status="{{ $booking->status }}" id="booking-card-{{ $booking->id }}">
-                    <div class="bg-white rounded-4 p-4 shadow-sm manifest-card h-100 d-flex flex-column justify-content-between">
-                        <div>
-                            <div class="d-flex justify-content-between align-items-start mb-3 border-bottom pb-3">
-                                <div>
-                                    <span class="text-muted font-monospace small d-block">MANIFEST #BKG-{{ $booking->id }}</span>
-                                    <h5 class="fw-bold text-dark mb-0">{{ $booking->package->name ?? 'Custom Package Bundle' }}</h5>
-                                </div>
-                                
+        <div class="table-responsive bg-white rounded-4 shadow-sm border mb-4">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">ID</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Client Name</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Trip Package</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Target Date</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Passengers</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Status</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="manifestTableBody">
+                    @forelse($bookings as $booking)
+                        <tr class="booking-table-row" data-status="{{ $booking->status }}">
+                            <td class="px-4 py-3 fw-bold text-dark">#BKG-{{ $booking->id }}</td>
+                            <td class="px-4 py-3">
+                                <div class="fw-bold text-dark">{{ $booking->user->name ?? 'Unknown Client' }}</div>
+                                <div class="small text-muted">{{ $booking->user->email ?? 'N/A' }}</div>
+                            </td>
+                            <td class="px-4 py-3 fw-medium text-dark">{{ $booking->package->name ?? 'Custom Package Bundle' }}</td>
+                            <td class="px-4 py-3 text-muted">{{ date('F d, Y', strtotime($booking->pickup_datetime)) }}</td>
+                            <td class="px-4 py-3 text-muted">{{ $booking->pax }} Pax</td>
+                            <td>
                                 @if($booking->status === 'pending')
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 11px;">
-                                        🟡 Pending Approval
-                                    </span>
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">🟡 Pending Approval</span>
+                                @elseif($booking->status === 'approved')
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2">🔵 Awaiting Payment</span>
                                 @elseif($booking->status === 'confirmed')
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 11px;">
-                                        🟢 Confirmed / Paid
-                                    </span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">🟢 Paid / Confirmed</span>
                                 @else
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 11px;">
-                                        ⚫ {{ ucfirst($booking->status) }}
-                                    </span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">⚫ {{ ucfirst($booking->status) }}</span>
                                 @endif
-                            </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-12 col-sm-6 border-end">
-                                    <span class="text-muted small text-uppercase fw-bold d-block mb-1" style="font-size: 10px;">Lead Passenger</span>
-                                    <div class="fw-bold text-dark">{{ $booking->user->name ?? 'Unknown Client' }}</div>
-                                    <span class="text-muted small d-block"><i class="bi bi-envelope me-1"></i>{{ $booking->user->email ?? 'N/A' }}</span>
-                                    <span class="text-muted small d-block"><i class="bi bi-telephone me-1"></i>{{ $booking->user->phone ?? 'No Phone' }}</span>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <span class="text-muted small text-uppercase fw-bold d-block mb-1" style="font-size: 10px;">Schedule Target</span>
-                                    <div class="fw-semibold text-dark">
-                                        <i class="bi bi-calendar-event me-1"></i>{{ date('F d, Y', strtotime($booking->pickup_datetime)) }}
-                                    </div>
-                                    <span class="text-muted small d-block">
-                                        <i class="bi bi-people me-1"></i>Group Size: <b>{{ $booking->pax }} Passengers</b>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="bg-light rounded-3 p-3 mb-3 border font-monospace">
-                                <span class="text-muted small text-uppercase fw-bold d-block mb-2 text-dark" style="font-size: 10px; font-family: system-ui, sans-serif;">Cost Ledger Breakdown</span>
-                                <div class="d-flex justify-content-between small text-secondary mb-1">
-                                    <span>Base Package Price:</span>
-                                    <span>₱{{ number_format($booking->package->package_price ?? 0, 2) }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between small text-secondary mb-2 border-bottom pb-2">
-                                    <span>Passenger Add-on:</span>
-                                    <span>₱{{ number_format(($booking->package->perhead_price ?? 0) * $booking->pax, 2) }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between fw-bold text-dark fs-6">
-                                    <span>Total Gross Cost:</span>
-                                    <span class="{{ $booking->status === 'pending' ? 'text-primary' : 'text-success' }}">
-                                        ₱{{ number_format($booking->total_price, 2) }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <span class="text-muted small text-uppercase fw-bold d-block mb-2" style="font-size: 10px;">Route Pinned Itinerary</span>
-                                <div class="d-flex flex-column small text-secondary">
-                                    @forelse($booking->places as $place)
-                                        <div class="timeline-dot fw-medium text-dark">${{ $place->name }}</div>
-                                    @empty
-                                        <div class="text-muted small italic">No locations bound to this trip template.</div>
-                                    @endforelse
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 pt-3 border-top mt-auto no-print">
-                            @if($booking->status === 'pending')
-                                <button type="button" 
-                                        class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-medium edit-manifest-btn" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#editManifestModal" 
-                                        data-id="{{ $booking->id }}"
-                                        data-pax="{{ $booking->pax }}"
-                                        data-places="{{ json_encode($booking->places) }}">
-                                    <i class="bi bi-sliders me-1"></i> Edit Settings
-                                </button>
-                                <button type="button" class="btn btn-light btn-sm rounded-pill px-3 fw-medium text-danger border"><i class="bi bi-x-circle me-1"></i> Reject</button>
-                                <form action="{{ route('admin.booking.update', $booking->id) }}" method="POST" class="flex-fill m-0 d-grid">
-                                    @csrf
-                                    <button type="submit" class="btn btn-primary btn-sm rounded-pill fw-medium shadow-sm w-100"><i class="bi bi-check2-circle me-1"></i> Confirm Booking</button>
-                                </form>
-                            @else
-                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill flex-fill fw-medium" onclick="printReceiptManifest('{{ $booking->id }}')">
-                                    <i class="bi bi-printer me-1"></i> Print Receipt
-                                </button>
-                                
-                                @if($booking->status !== 'completed')
-                                    <form action="{{ route('admin.booking.update.complete', $booking->id) }}" method="POST" class="flex-fill m-0 d-grid complete-action-form">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success btn-sm rounded-pill fw-medium text-white shadow-sm w-100"><i class="bi bi-patch-check me-1"></i> Mark as Completed</button>
-                                    </form>
-                                @endif
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-12 text-center py-5 bg-white rounded-4 border" id="noBookingsAlert">
-                    <i class="bi bi-folder-x fs-1 text-muted opacity-50 d-block mb-2"></i>
-                    <h6 class="text-muted">No processing workflows match your collection parameters right now.</h6>
-                </div>
-            @endforelse
-            
-            <div class="col-12 text-center py-5 bg-white rounded-4 border d-none no-print" id="jsEmptyAlert">
-                <i class="bi bi-folder-x fs-1 text-muted opacity-50 d-block mb-2"></i>
-                <h6 class="text-muted">No entries match this status filter.</h6>
-            </div>
+                            </td>
+                            <td class="px-4 py-3 text-end">
+                                <a href="{{ route('admin.booking.show', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium">
+                                    <i class="bi bi-eye me-1"></i> View Info
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr id="noBookingsRow">
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bi bi-folder-x fs-2 text-muted opacity-50 d-block mb-2"></i>
+                                <span class="text-muted">No processing workflows match your collection parameters right now.</span>
+                            </td>
+                        </tr>
+                    @endforelse
+                    
+                    <tr id="jsEmptyTableRow" class="d-none no-print">
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-folder-x fs-2 text-muted opacity-50 d-block mb-2"></i>
+                            <span class="text-muted">No entries match this status filter.</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-    </div>
 
-    <div id="printTargetSection"></div>
-
-    <div class="modal fade no-print" id="editManifestModal" tabindex="-1" aria-labelledby="editManifestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg">
-                <div class="modal-header bg-light border-bottom px-4 py-3">
-                    <div>
-                        <h5 class="modal-title fw-bold text-dark mb-0" id="editManifestModalLabel">🛠️ Adjust Manifest Settings</h5>
-                        <small class="text-muted">Modify live variables to fit custom user alignment requests.</small>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="editManifestForm" action="#" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-body p-4">
-                        
-                        <div class="mb-4">
-                            <label class="form-label text-dark fw-bold small mb-1">Adjust Passenger Count</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-people"></i></span>
-                                <input type="number" id="modalPaxInput" name="edit_passengers" class="form-control rounded-end-3" value="1" min="1" required>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="form-label text-dark fw-bold small mb-2">Manage Selected Itinerary Spots</label>
-                            <div class="d-flex flex-column gap-2" id="modalPlacesContainer"></div>
-                        </div>
-
-                    </div>
-                    <div class="modal-footer bg-light border-top px-4 py-3">
-                        <button type="button" class="btn btn-light btn-sm rounded-pill px-3 fw-semibold text-muted" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-sm">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @include('layouts.notification')
 
     <script>
-        // --- 3. PRINT RECEIPT MANIFEST DISPATCH FUNCTION ---
-        function printReceiptManifest(id) {
-            const cardElement = document.getElementById(`booking-card-${id}`);
-            if (!cardElement) return;
-
-            const printSandbox = document.getElementById('printTargetSection');
-            
-            // Clone content into the receipt printing track
-            printSandbox.innerHTML = `
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <h4 style="margin: 0; font-weight: bold;">ETRAV TOURS INC</h4>
-                    <small>Official Booking Receipt</small>
-                    <div style="border-bottom: 1px dashed #000; margin-top: 8px;"></div>
-                </div>
-                ${cardElement.innerHTML}
-                <div style="text-align: center; margin-top: 15px; font-size: 10px;">
-                    <div style="border-top: 1px dashed #000; margin-bottom: 6px;"></div>
-                    Thank you for choosing ETRAV!<br>
-                    Please present this coupon upon boarding.
-                </div>
-            `;
-
-            // Trigger system output print view
-            window.print();
-
-            // Reset sandbox clean after execution
-            printSandbox.innerHTML = '';
-        }
 
         document.addEventListener('DOMContentLoaded', function () {
             // --- 1. FILTER TABS LOGIC ---
             const filterButtons = document.querySelectorAll('.filter-btn');
-            const cardItems = document.querySelectorAll('.booking-card-item');
-            const jsEmptyAlert = document.getElementById('jsEmptyAlert');
-            const baseAlert = document.getElementById('noBookingsAlert');
+            const cardItems = document.querySelectorAll('.booking-table-row');
+            const jsEmptyAlert = document.getElementById('jsEmptyTableRow');
+            const baseAlert = document.getElementById('noBookingsRow');
 
             filterButtons.forEach(btn => {
                 btn.addEventListener('click', function () {

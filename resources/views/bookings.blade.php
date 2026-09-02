@@ -93,13 +93,8 @@
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2"
                 href="{{ route('bookings.view') }}">
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"
-                    style="height: 36px; width: 36px;" class="text-primary fill-current">
-                    <path
-                        d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm2 32h-4v-4h4v4zm0-8h-4V12h4v16z"
-                        fill="currentColor" />
-                </svg>
-                <span class="fs-5 tracking-wider">ETRAV</span>
+                <img src="{{ asset('storage/logotext.png') }}" alt="ETRAV Logo"
+                    style="height: 38px; object-fit: contain;">
             </a>
 
             <div class="ms-auto">
@@ -254,9 +249,9 @@
                                             <div>
                                                 <span class="text-muted small d-block">Total Price:
                                                     ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold {{ $booking->status === 'pending' ? 'text-danger' : 'text-success' }}"
+                                                <div class="fw-bold {{ $booking->status === 'pending' ? 'text-secondary' : ($booking->status === 'approved' ? 'text-danger' : 'text-success') }}"
                                                     style="font-size: 15px;">
-                                                    {{ $booking->status === 'pending' ? 'Deposit Due: ₱' . number_format($booking->deposit_amount, 2) : 'Paid' }}
+                                                    {{ $booking->status === 'pending' ? 'Awaiting Approval' : ($booking->status === 'approved' ? '25% Deposit Due: ₱' . number_format($booking->deposit_amount, 2) : '25% Deposit Paid') }}
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-2">
@@ -268,16 +263,16 @@
                                                     data-status="{{ $booking->status }}"
                                                     data-title="{{ $booking->package->name ?? 'Package Specification' }}"
                                                     data-pickup="{{ $booking->pickup_place_name }}"
-                                                    data-base="₱{{ number_format($booking->package->package_price ?? 0, 2) }}"
-                                                    data-heads="₱{{ number_format(($booking->package->perhead_price ?? 0) * $booking->pax, 2) }} ({{ $booking->pax }} x ₱{{ $booking->package->perhead_price ?? 0 }})"
+                                                    data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                    data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
                                                     data-total="₱{{ number_format($booking->total_price, 2) }}"
-                                                    data-places="{{ $booking->places->toJson() }}">
+                                                    data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}">
                                                     <i class="bi bi-eye"></i> View Details
                                                 </button>
-                                                @if ($booking->status === 'pending')
-                                                    <button
-                                                        class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm">Pay
-                                                        Deposit</button>
+                                                @if ($booking->status === 'approved')
+                                                    <button type="button"
+                                                        class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"
+                                                        onclick="openGcashModal({{ $booking->id }}, '₱{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
                                                 @endif
                                             </div>
                                         </div>
@@ -299,7 +294,7 @@
             <!-- TAB: PENDING -->
             <div class="tab-pane fade" id="tab-pending" role="tabpanel">
                 <div class="row g-4">
-                    @forelse($bookings->where('status', 'pending') as $booking)
+                    @forelse($bookings->whereIn('status', ['pending', 'approved']) as $booking)
                         <div class="col-12">
                             <div
                                 class="card shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
@@ -313,13 +308,16 @@
                                     <div class="col-md-9 p-4">
                                         <div class="d-flex justify-content-between mb-2">
                                             <h5 class="fw-bold text-dark mb-0">
-                                                {{ $booking->package->name }}
+                                                {{ $booking->package->name ?? 'Custom Package' }}
                                                 <span
                                                     class="badge bg-danger rounded-pill px-2 ms-1 notify-badge-{{ $booking->id }} {{ $booking->notify ? '' : 'd-none' }}"
                                                     style="font-size: 9px;">NEW UPDATE</span>
                                             </h5>
-                                            <span
-                                                class="badge status-badge bg-warning-subtle text-warning border border-warning-subtle text-uppercase">Pending</span>
+                                            @if($booking->status === 'pending')
+                                                <span class="badge status-badge bg-warning-subtle text-warning border border-warning-subtle text-uppercase">Pending Approval</span>
+                                            @else
+                                                <span class="badge status-badge bg-info-subtle text-info border border-info-subtle text-uppercase">Awaiting Payment</span>
+                                            @endif
                                         </div>
                                         <div class="row my-2 text-muted small">
                                             <div class="col-sm-4">Date:
@@ -332,23 +330,29 @@
                                                     Heads</strong></div>
                                         </div>
                                         <div
-                                            class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top">
+                                            class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top flex-wrap gap-3">
                                             <div><span class="text-muted small d-block">Total Price:
                                                     ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold text-danger">Deposit Due:
-                                                    ₱{{ number_format($booking->deposit_amount, 2) }}</div>
+                                                <div class="fw-bold {{ $booking->status === 'pending' ? 'text-secondary' : 'text-danger' }}">
+                                                    {{ $booking->status === 'pending' ? 'Awaiting Approval' : '25% Deposit Due: ₱' . number_format($booking->deposit_amount, 2) }}
+                                                </div>
                                             </div>
-                                            <button class="btn btn-outline-secondary btn-sm rounded-pill"
-                                                onclick="viewItineraryDetails(this)" data-id="{{ $booking->id }}"
-                                                data-notify="{{ $booking->notify ? '1' : '0' }}"
-                                                data-status="{{ $booking->status }}"
-                                                data-title="{{ $booking->package->name }}"
-                                                data-pickup="Lat: {{ $booking->latitude }}, Lng: {{ $booking->longitude }}"
-                                                data-base="₱{{ number_format($booking->package->package_price, 2) }}"
-                                                data-heads="₱{{ number_format($booking->package->perhead_price * $booking->pax, 2) }}"
-                                                data-total="₱{{ number_format($booking->total_price, 2) }}"
-                                                data-places="{{ $booking->places->toJson() }}"><i
-                                                    class="bi bi-eye"></i> View Details</button>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 fw-medium"
+                                                    onclick="viewItineraryDetails(this)" data-id="{{ $booking->id }}"
+                                                    data-notify="{{ $booking->notify ? '1' : '0' }}"
+                                                    data-status="{{ $booking->status }}"
+                                                    data-title="{{ $booking->package->name ?? 'Custom Package' }}"
+                                                    data-pickup="{{ $booking->pickup_place_name }}"
+                                                    data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                    data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
+                                                    data-total="₱{{ number_format($booking->total_price, 2) }}"
+                                                    data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
+                                                        class="bi bi-eye"></i> View Details</button>
+                                                @if($booking->status === 'approved')
+                                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="openGcashModal({{ $booking->id }}, '₱{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -380,7 +384,7 @@
                                     <div class="col-md-9 p-4">
                                         <div class="d-flex justify-content-between mb-2">
                                             <h5 class="fw-bold text-dark mb-0">
-                                                {{ $booking->package->name }}
+                                                {{ $booking->package->name ?? 'Custom Package' }}
                                                 <span
                                                     class="badge bg-danger rounded-pill px-2 ms-1 notify-badge-{{ $booking->id }} {{ $booking->notify ? '' : 'd-none' }}"
                                                     style="font-size: 9px;">NEW UPDATE</span>
@@ -402,18 +406,18 @@
                                             class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top">
                                             <div><span class="text-muted small d-block">Total Price:
                                                     ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold text-success">Paid</div>
+                                                <div class="fw-bold text-success">25% Deposit Paid</div>
                                             </div>
                                             <button class="btn btn-outline-secondary btn-sm rounded-pill"
                                                 onclick="viewItineraryDetails(this)" data-id="{{ $booking->id }}"
                                                 data-notify="{{ $booking->notify ? '1' : '0' }}"
                                                 data-status="{{ $booking->status }}"
-                                                data-title="{{ $booking->package->name }}"
-                                                data-pickup="Lat: {{ $booking->latitude }}, Lng: {{ $booking->longitude }}"
-                                                data-base="₱{{ number_format($booking->package->package_price, 2) }}"
-                                                data-heads="₱{{ number_format($booking->package->perhead_price * $booking->pax, 2) }}"
+                                                data-title="{{ $booking->package->name ?? 'Custom Package' }}"
+                                                data-pickup="{{ $booking->pickup_place_name }}"
+                                                data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
                                                 data-total="₱{{ number_format($booking->total_price, 2) }}"
-                                                data-places="{{ $booking->places->toJson() }}"><i
+                                                data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                     class="bi bi-eye"></i> View Details</button>
                                         </div>
                                     </div>
@@ -446,7 +450,7 @@
                                     <div class="col-md-9 p-4">
                                         <div class="d-flex justify-content-between mb-2">
                                             <h5 class="fw-bold text-dark mb-0">
-                                                {{ $booking->package->name }}
+                                                {{ $booking->package->name ?? 'Custom Package' }}
                                                 <span
                                                     class="badge bg-danger rounded-pill px-2 ms-1 notify-badge-{{ $booking->id }} {{ $booking->notify ? '' : 'd-none' }}"
                                                     style="font-size: 9px;">NEW UPDATE</span>
@@ -474,12 +478,12 @@
                                                 onclick="viewItineraryDetails(this)" data-id="{{ $booking->id }}"
                                                 data-notify="{{ $booking->notify ? '1' : '0' }}"
                                                 data-status="{{ $booking->status }}"
-                                                data-title="{{ $booking->package->name }}"
-                                                data-pickup="Lat: {{ $booking->latitude }}, Lng: {{ $booking->longitude }}"
-                                                data-base="₱{{ number_format($booking->package->package_price, 2) }}"
-                                                data-heads="₱{{ number_format($booking->package->perhead_price * $booking->pax, 2) }}"
+                                                data-title="{{ $booking->package->name ?? 'Custom Package' }}"
+                                                data-pickup="{{ $booking->pickup_place_name }}"
+                                                data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
                                                 data-total="₱{{ number_format($booking->total_price, 2) }}"
-                                                data-places="{{ $booking->places->toJson() }}"><i
+                                                data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                     class="bi bi-eye"></i> View Details</button>
                                         </div>
                                     </div>
@@ -527,18 +531,50 @@
                     </div>
                     <div class="border-top pt-3 mt-4 bg-light p-3 rounded-3" style="font-size: 13px;">
                         <h6 class="fw-bold mb-2 text-dark">Financial Document Summary</h6>
-                        <div class="d-flex justify-content-between mb-1 text-muted"><span>Base Tier
-                                Pricing:</span><span id="detailBasePrice">₱0.00</span></div>
-                        <div class="d-flex justify-content-between mb-1 text-muted"><span>Per Head Scaling:</span><span
-                                id="detailHeadsPrice">₱0.00</span></div>
+                        <div class="d-flex justify-content-between mb-1 text-muted"><span>Distance-Based Fare:</span><span id="detailBasePrice">₱0.00</span></div>
+                        <div class="d-flex justify-content-between mb-1 text-muted"><span>Cost per Person:</span><span id="detailHeadsPrice">₱0.00</span></div>
                         <div class="d-flex justify-content-between fw-bold text-dark border-top pt-2 fs-6">
-                            <span>Estimated Overall:</span><span id="detailTotalPrice">₱0.00</span>
+                            <span>Total Booking Cost:</span><span id="detailTotalPrice">₱0.00</span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
                     <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm"
                         data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GCASH PAYMENT MODAL -->
+    <div class="modal fade" id="gcashModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 pb-0 justify-content-end">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4 pt-0">
+                    <div class="mb-3">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/GCash_logo.svg" alt="GCash" style="height: 35px;">
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">Total Downpayment</h6>
+                    <h3 class="fw-black text-primary mb-3" id="gcashAmount">₱0.00</h3>
+                    
+                    <div class="bg-light p-3 rounded-3 mb-4">
+                        <!-- Simulated Fake QR Code -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=FakeGCashPayment" alt="GCash QR" class="img-fluid rounded mb-2 shadow-sm" style="max-width: 150px;">
+                        <span class="small text-muted d-block">Scan to Pay</span>
+                    </div>
+
+                    <div class="text-start mb-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Reference Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="gcashReferenceInput" placeholder="Enter 13-digit ref no." maxlength="13">
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2" id="confirmGcashBtn" onclick="confirmGcashPayment()">
+                        <div class="spinner-border spinner-border-sm d-none" role="status" id="gcashSpinner"></div>
+                        <span id="gcashBtnText">Submit Payment</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -678,6 +714,65 @@
                 if (isVisible) el.classList.remove('d-none');
                 else el.classList.add('d-none');
             }
+        }
+
+        let currentPaymentBookingId = null;
+
+        function openGcashModal(bookingId, amountText) {
+            currentPaymentBookingId = bookingId;
+            document.getElementById('gcashAmount').innerText = amountText;
+            document.getElementById('gcashReferenceInput').value = '';
+            new bootstrap.Modal(document.getElementById('gcashModal')).show();
+        }
+
+        function confirmGcashPayment() {
+            const refInput = document.getElementById('gcashReferenceInput').value.trim();
+            if (refInput.length < 13) {
+                alert('Please enter a valid 13-digit GCash Reference Number.');
+                return;
+            }
+
+            const btn = document.getElementById('confirmGcashBtn');
+            const spinner = document.getElementById('gcashSpinner');
+            const text = document.getElementById('gcashBtnText');
+            
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+            text.innerText = 'Verifying...';
+            
+            // Simulate 3 seconds network/payment processing delay
+            setTimeout(() => {
+                // Send AJAX request to complete the payment
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                fetch(`/booking/${currentPaymentBookingId}/pay`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ reference: refInput })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Payment failed');
+                    
+                    text.innerText = 'Payment Successful!';
+                    spinner.classList.add('d-none');
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Payment verification failed. Please try again.");
+                    btn.disabled = false;
+                    spinner.classList.add('d-none');
+                    text.innerText = 'Submit Payment';
+                });
+            }, 3000); // 3000ms = 3 seconds
         }
     </script>
 </body>

@@ -16,8 +16,14 @@ return new class extends Migration
 
             // Foreign keys linking your parent booking and the master spot
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
-            $table->foreignId('place_id')->constrained()->onDelete('cascade');
+            $table->foreignId('place_id')->nullable()->constrained()->onDelete('cascade');
             
+            // Custom payload data for one-off dragged map pins
+            $table->string('custom_name')->nullable();
+            $table->decimal('custom_latitude', 11, 8)->nullable();
+            $table->decimal('custom_longitude', 11, 8)->nullable();
+            $table->string('custom_category')->nullable();
+
             // Custom payload data from your UI inputs
             $table->integer('duration_minutes');
 

@@ -16,9 +16,6 @@ return new class extends Migration
 
             $table->string('name');
             $table->string('type');
-            $table->integer('package_price');
-            $table->integer('perhead_price');
-            $table->integer('pax');
             $table->string('image_path');
             $table->text('description');
 

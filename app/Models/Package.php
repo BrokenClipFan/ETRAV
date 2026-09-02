@@ -10,7 +10,6 @@ class Package extends Model
     protected $fillable = [
         'name',
         'type',
-        'package_price',
         'image_path',
         'description'
     ];
@@ -20,6 +19,11 @@ class Package extends Model
         return $this->belongsToMany(Place::class, 'package_places')
                     ->withPivot('position', 'duration')
                     ->withTimestamps();
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
     }
     
 }

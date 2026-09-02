@@ -312,12 +312,8 @@
 
                                 <span
                                     class="position-absolute bottom-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7 opacity-90 d-flex align-items-center gap-1">
-                                    <i class="bi bi-cash-stack"></i> 
-                                    @if (($package->package_price ?? 0) > 0)
-                                        Base: ₱{{ number_format($package->package_price) }}
-                                    @else
-                                        Base: Price Varies
-                                    @endif
+                                    <i class="bi bi-car-front text-info"></i> 
+                                    Fare by Vehicle
                                 </span>
                             </div>
 
@@ -325,12 +321,8 @@
                                 <div>
                                     <h6 class="fw-bold text-dark mb-1 fs-6 text-truncate">{{ $package->name }}</h6>
                                     <p class="text-primary fw-semibold small mb-2 d-flex align-items-center gap-1">
-                                        <i class="bi bi-person-check-fill"></i>
-                                        @if (($package->perhead_price ?? 0) > 0)
-                                            ₱{{ number_format($package->perhead_price) }} <span class="text-muted fw-normal">/ per head</span>
-                                        @else
-                                            <span class="text-muted fw-normal">Flexible Pricing</span>
-                                        @endif
+                                        <i class="bi bi-geo-fill"></i>
+                                        <span class="text-muted fw-normal">Distance-Based Pricing</span>
                                     </p>
                                     <p class="text-muted mb-3"
                                         style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">

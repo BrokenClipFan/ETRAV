@@ -21,12 +21,14 @@ Route::middleware('auth')->group(function() {
     Route::get('/bookings/', [BookingController::class, 'view'])->name('bookings.view');
     Route::get('/dashboard/', [BookingController::class, 'view'])->name('dashboard');
     Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
+    Route::post('/booking/{id}/pay', [BookingController::class, 'payDeposit']);
     Route::get('/package/{id}', [BookingController::class, 'viewPackage'])->name('package.book');
 
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings');
+    Route::get('/booking/{id}', [AdminBookingController::class, 'show'])->name('booking.show');
     Route::post('/booking/{id}/update', [AdminBookingController::class, 'update'])->name('booking.update');
     Route::post('/booking/{id}/update/completed', [AdminBookingController::class, 'markComplete'])->name('booking.update.complete');
 
@@ -39,9 +41,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('place/update/{id}', [PlaceController::class, 'update'])->name('spot.update');
     Route::delete('/admin/spots/{id}', [PlaceController::class, 'destroy'])->name('spot.destroy');
     
-    Route::get('statistic', function () {
-        return view('statistic');
-    });
+    Route::get('statistic', [AdminBookingController::class, 'statistics'])->name('statistic');
 
     Route::resource('/transport', TransportController::class);
 });

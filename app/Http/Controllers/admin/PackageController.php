@@ -24,7 +24,6 @@ class PackageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
-            'package_price' => 'required|numeric',
             'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
             'description' => 'required|string|max:255',
             'attached_spot_ids' => 'required|string',
@@ -65,7 +64,6 @@ class PackageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
-            'package_price' => 'required|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'description' => 'required|string|max:255',
             'attached_spot_ids' => 'required|string',

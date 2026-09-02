@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('package_id')->constrained()->onDelete('cascade');
             $table->foreignId('place_id')->constrained()->onDelete('cascade');
             $table->integer('position');
+            $table->time('duration');
 
             $table->timestamps();
         });

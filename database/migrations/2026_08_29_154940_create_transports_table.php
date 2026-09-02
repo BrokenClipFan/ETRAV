@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('model');
             $table->string('plate_number')->unique();
             $table->integer('capacity');
+            $table->double('base_price');
+            $table->integer('interval_rate')->default(5000);
+            $table->integer('pricing_distance')->default('10000');
             $table->string('status');
             $table->string('front_image_path');
             $table->string('side_image_path');

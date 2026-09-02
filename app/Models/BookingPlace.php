@@ -9,10 +9,18 @@ class BookingPlace extends Pivot
     // 1. Tell Laravel to treat this as an eloquent pivot model
     protected $table = 'booking_places';
 
-    // 2. Define fillable properties for mass assignment
     protected $fillable = [
         'booking_id',
         'place_id',
+        'custom_name',
+        'custom_latitude',
+        'custom_longitude',
+        'custom_category',
         'duration_minutes',
     ];
+
+    public function place()
+    {
+        return $this->belongsTo(Place::class, 'place_id');
+    }
 }

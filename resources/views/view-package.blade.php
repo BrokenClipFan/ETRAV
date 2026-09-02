@@ -267,6 +267,7 @@
                     <input type="hidden" name="pickup_latitude" id="pickupLatitude" value="{{ old('pickup_latitude') }}">
                     <input type="hidden" name="pickup_longitude" id="pickupLongitude" value="{{ old('pickup_longitude') }}">
                     <input type="hidden" name="pickup_place_name" id="pickupPlaceName" value="{{ old('pickup_place_name') }}">
+                    <input type="hidden" name="total_distance" id="totalDistanceInput" value="0">
 
                     @if ($errors->has('package_id') || $errors->has('pickup_latitude') || $errors->has('pickup_longitude'))
                         <div class="alert alert-danger rounded-3 p-2.5 mb-3 small d-flex align-items-center gap-2" role="alert">
@@ -281,9 +282,8 @@
                         </h6>
                         <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
                             <div class="d-flex align-items-center gap-1">
-                                <i class="bi bi-tag-fill text-primary"></i>
-                                <span>Base:</span>
-                                <span id="modalBasePriceLabel" class="fw-semibold text-dark">₱{{ number_format($package->package_price ?? 0, 2) }}</span>
+                                <i class="bi bi-geo-fill text-primary"></i>
+                                <span class="fw-semibold text-dark">Distance-Based Pricing</span>
                             </div>
                         </div>
                     </div>
@@ -297,18 +297,16 @@
                             <label class="form-label fw-semibold text-muted small d-block">
                                 <i class="bi bi-geo-alt me-1 text-primary"></i> Pickup Location
                             </label>
-                            <div class="p-2.5 border rounded-3 bg-white d-flex align-items-center justify-content-between @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) border-danger @endif shadow-sm">
-                                <div class="d-flex align-items-center gap-2 overflow-hidden me-2" style="min-width: 0;">
-                                    <i class="bi bi-geo-alt-fill text-warning fs-5 flex-shrink-0"></i>
-                                    <span class="small text-muted text-truncate d-inline-block" id="pickupCoordinatesPlaceholder" style="max-width: 240px;" title="No pickup location selected on map">
-                                        @if (old('pickup_latitude') && old('pickup_longitude'))
-                                            Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
-                                        @else
-                                            Choose on the map
-                                        @endif
-                                    </span>
+                            <div class="input-group shadow-sm @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) is-invalid @endif">
+                                <span class="input-group-text bg-white text-warning"><i class="bi bi-geo-alt-fill"></i></span>
+                                <div class="form-control bg-white text-truncate d-flex align-items-center text-muted small" id="pickupCoordinatesPlaceholder" style="cursor:default;" title="No pickup location selected on map">
+                                    @if (old('pickup_latitude') && old('pickup_longitude'))
+                                        Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
+                                    @else
+                                        Choose on the map
+                                    @endif
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0 d-flex align-items-center gap-1" onclick="startPickupMapMapping()">
+                                <button class="btn btn-outline-primary fw-medium px-3" type="button" onclick="startPickupMapMapping()">
                                     <i class="bi bi-pin-map"></i> Set
                                 </button>
                             </div>
@@ -411,12 +409,8 @@
 
                             <div class="border-top border-bottom py-2 my-2 bg-white rounded-3 px-2 shadow-sm">
                                 <span class="fw-bold text-dark d-block mb-1" style="font-size: 13px;"><i class="bi bi-tag-fill text-success me-1"></i> Price Details</span>
-                                <div class="d-flex justify-content-between mt-1 text-muted" id="breakdownPackageRateRow">
-                                    <span class="ps-2">Package Fee:</span>
-                                    <span class="fw-medium text-dark" id="breakdownPackageRate">₱0.00</span>
-                                </div>
                                 <div class="d-flex justify-content-between mt-1 text-muted">
-                                    <span class="ps-2">Vehicle Fee:</span>
+                                    <span class="ps-2">Trip Fare:</span>
                                     <span class="fw-medium text-dark" id="breakdownVehicleFare">₱0.00</span>
                                 </div>
                                 <div class="ps-2 text-secondary fst-italic lh-sm mt-1" style="font-size: 11px;" id="breakdownVehicleCalculation">
@@ -447,8 +441,8 @@
                     </div>
                 </div>
                     
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;">
-                        <i class="bi bi-credit-card"></i> Proceed to Payment
+                    <button type="button" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;" onclick="submitBookingRequest()">
+                        <i class="bi bi-calendar-check"></i> Submit Booking Request
                     </button>
                 </form>
             </div>
@@ -575,6 +569,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -1133,8 +1128,8 @@
         }
 
         function initializeForm() {
-            // Load base price from PHP
-            activeBasePrice = parseFloat("{{ $package->package_price ?? 0 }}") || 0;
+            // Package base price is now deprecated; we rely purely on Vehicle Price
+            activeBasePrice = 0;
             
             // Build draggable spots
             const itineraryContainer = document.getElementById('modalItineraryContainer');
@@ -1149,37 +1144,41 @@
                     const badge = document.createElement('div');
                     badge.className = "d-flex align-items-center bg-light border rounded-3 p-2 small fw-medium draggable-spot-item";
                     badge.style.cursor = "grab";
-                    let editBtnHtml = '';
-                    if (spot.isCustom) {
-                        editBtnHtml = `
-                        <button type="button" class="btn btn-sm btn-link text-primary p-0 ms-1 me-1" onclick="renameCustomStop('${spot.id}')" title="Rename stop">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>`;
-                    }
-
                     let h = 1; let m = 0;
                     const durMatch = String(spot.duration || '').match(/(\d+)h\s*(\d+)m/);
                     if (durMatch) {
                         h = parseInt(durMatch[1]);
                         m = parseInt(durMatch[2]);
                     }
-
+                    
                     badge.innerHTML = `
-                        <div class="d-flex align-items-center flex-grow-1 overflow-hidden" style="max-width: 50%;">
-                            <i class="bi bi-grip-vertical text-muted me-2"></i>
-                            <span class="text-primary me-2">${index + 1}.</span> 
-                            <span class="text-truncate">${spot.name}</span>
+                        <div class="d-flex align-items-center flex-grow-1 overflow-hidden me-2">
+                            <i class="bi bi-grip-vertical text-muted me-1"></i>
+                            <span class="text-primary fw-bold me-2">${index + 1}.</span> 
+                            <span class="text-truncate" style="font-size: 13px;" title="${spot.name}">${spot.name}</span>
                         </div>
-                        <div class="d-flex align-items-center gap-1 ms-auto">
-                            <input type="number" class="form-control form-control-sm text-center p-1 border-primary-subtle" style="width: 40px; font-size: 10px;" placeholder="H" min="0" value="${h}" onchange="updateSpotDuration('${spot.id}', 'hours', this.value)">
-                            <span class="text-muted" style="font-size:9px;">h</span>
-                            <input type="number" class="form-control form-control-sm text-center p-1 border-primary-subtle" style="width: 40px; font-size: 10px;" placeholder="M" min="0" max="59" value="${m}" onchange="updateSpotDuration('${spot.id}', 'minutes', this.value)">
-                            <span class="text-muted" style="font-size:9px;">m</span>
+                        
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            ${spot.isCustom ? `
+                            <!-- Edit Button -->
+                            <button type="button" class="btn btn-sm text-primary p-0 m-0 border-0 bg-transparent" onclick="renameCustomStop('${spot.id}')" title="Rename stop">
+                                <i class="bi bi-pencil-square fs-6"></i>
+                            </button>
+                            ` : ''}
+
+                            <!-- Duration inputs -->
+                            <div class="d-flex align-items-center bg-white border rounded-1 overflow-hidden shadow-sm">
+                                <input type="number" class="form-control form-control-sm border-0 text-center px-1 py-0 shadow-none text-dark" style="width: 44px; font-size: 12px; height: 26px;" min="0" value="${h}" onchange="updateSpotDuration('${spot.id}', 'hours', this.value)">
+                                <span class="bg-light text-muted px-1 border-start border-end" style="font-size: 10px; line-height: 26px;">h</span>
+                                <input type="number" class="form-control form-control-sm border-0 text-center px-1 py-0 shadow-none text-dark" style="width: 44px; font-size: 12px; height: 26px;" min="0" max="59" value="${m}" onchange="updateSpotDuration('${spot.id}', 'minutes', this.value)">
+                                <span class="bg-light text-muted px-1 border-start" style="font-size: 10px; line-height: 26px;">m</span>
+                            </div>
+
+                            <!-- Actions -->
+                            <button type="button" class="btn btn-sm text-danger p-0 m-0 border-0 bg-transparent" onclick="removePlaceFromItinerary('${spot.id}')" title="Remove spot">
+                                <i class="bi bi-x-circle-fill fs-6"></i>
+                            </button>
                         </div>
-                        ${editBtnHtml}
-                        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="removePlaceFromItinerary('${spot.id}')" title="Remove spot">
-                            <i class="bi bi-x-circle-fill"></i>
-                        </button>
                     `;
                     // Add hidden input so form submission retains the custom order
                     const input = document.createElement('input');
@@ -1193,6 +1192,32 @@
                     durInput.name = `spots_duration[${spot.id}]`;
                     durInput.value = spot.duration;
                     badge.appendChild(durInput);
+
+                    if (spot.isCustom) {
+                        const nameInput = document.createElement('input');
+                        nameInput.type = 'hidden';
+                        nameInput.name = `custom_spots_name[${spot.id}]`;
+                        nameInput.value = spot.name;
+                        badge.appendChild(nameInput);
+
+                        const latInput = document.createElement('input');
+                        latInput.type = 'hidden';
+                        latInput.name = `custom_spots_lat[${spot.id}]`;
+                        latInput.value = spot.lat;
+                        badge.appendChild(latInput);
+
+                        const lngInput = document.createElement('input');
+                        lngInput.type = 'hidden';
+                        lngInput.name = `custom_spots_lng[${spot.id}]`;
+                        lngInput.value = spot.lng;
+                        badge.appendChild(lngInput);
+
+                        const catInput = document.createElement('input');
+                        catInput.type = 'hidden';
+                        catInput.name = `custom_spots_category[${spot.id}]`;
+                        catInput.value = spot.category;
+                        badge.appendChild(catInput);
+                    }
 
                     itineraryContainer.appendChild(badge);
                 });
@@ -1392,7 +1417,7 @@
                 headsInput.value = currentPaxLimit;
             }
             
-            const totalBasePrice = activeBasePrice + vehiclePrice;
+            const totalBasePrice = vehiclePrice;
             const perHeadRate = totalBasePrice / (currentPaxLimit || 1);
 
             let totalToPay = 0;
@@ -1414,23 +1439,16 @@
             if (perHeadLabel) {
                 perHeadLabel.innerText = formatCurrency(perHeadRate);
             }
-            document.getElementById('modalBasePriceLabel').innerText = formatCurrency(totalBasePrice);
             
             const distanceKm = (totalRouteDistance / 1000).toFixed(1);
             document.getElementById('breakdownDistance').innerText = `${distanceKm} km`;
+            document.getElementById('totalDistanceInput').value = totalRouteDistance;
 
-            document.getElementById('breakdownPackageRate').innerText = formatCurrency(activeBasePrice);
             document.getElementById('breakdownVehicleFare').innerText = formatCurrency(vehiclePrice);
             if (additionalIntervals > 0) {
                 document.getElementById('breakdownVehicleCalculation').innerText = `(Includes ${formatCurrency(baseVehiclePrice)} base rate + ${formatCurrency(intervalRate)} × ${additionalIntervals} extra distance charges)`;
             } else {
                 document.getElementById('breakdownVehicleCalculation').innerText = `(Base rate only, no extra distance charges)`;
-            }
-            
-            if (activeBasePrice <= 0) {
-                document.getElementById('breakdownPackageRateRow').style.display = 'none';
-            } else {
-                document.getElementById('breakdownPackageRateRow').style.display = 'flex';
             }
 
             document.getElementById('breakdownBase').innerText = isJoinerAllowed ?
@@ -1474,6 +1492,22 @@
                     console.error("Geocoding error", err);
                     alert("Failed to search place due to a network error.");
                 });
+        }
+
+        function submitBookingRequest() {
+            const pickupLat = document.getElementById('pickupLatitude').value;
+            if (!pickupLat) {
+                alert("Please click 'Set' and select a Pickup Location on the map first.");
+                return;
+            }
+
+            const vehicleId = document.getElementById('vehicleSelect').value;
+            if (!vehicleId) {
+                alert("Please select a Transport Vehicle for your trip.");
+                return;
+            }
+
+            document.getElementById('bookingForm').submit();
         }
 
         window.onload = function() {

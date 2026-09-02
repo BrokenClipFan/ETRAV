@@ -165,8 +165,7 @@
                                 <div class="d-flex align-items-center gap-1 mb-1">
                                     <h6 class="fw-bold mb-0 text-dark small text-truncate">{{ $package->name }}</h6>
                                 </div>
-                                <span class="text-muted font-monospace d-block" style="font-size: 11px;">Base:
-                                    ₱{{ $package->package_price }}</span>
+                                <span class="text-muted small d-block" style="font-size: 11px;">Dynamic Pricing</span>
                             </div>
                             <div class="btn-group btn-group-sm shadow-sm">
                                 <button type="button" class="btn btn-white border text-secondary bg-white"
@@ -214,14 +213,6 @@
                                 <option value="trending">⚡ Trending</option>
                                 <option value="budget">💰 Budget Friendly</option>
                             </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-12 mb-2">
-                            <label class="form-label text-muted small fw-bold mb-1">Base Price</label>
-                            <input type="number" name="package_price" id="inputPackagePrice"
-                                class="form-control rounded-3 form-control-sm" min="0" required>
                         </div>
                     </div>
 
@@ -891,7 +882,6 @@
             document.getElementById('formPackageId').value = packageData.id;
             document.getElementById('inputName').value = packageData.name;
             document.getElementById('selectType').value = packageData.type || '';
-            document.getElementById('inputPackagePrice').value = packageData.package_price;
             document.getElementById('textareaDescription').value = packageData.description || '';
 
             const submitBtn = document.getElementById('formSubmitBtn');

@@ -16,6 +16,8 @@ return new class extends Migration
 
             $table->string('name');
             $table->integer('price');
+            $table->string('category');
+            $table->string('place');
             $table->string('description');
             $table->string('image_path');
             $table->decimal('latitude', 11,8);
