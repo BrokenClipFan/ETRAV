@@ -11,34 +11,44 @@
         @csrf
 
         <!-- Full Name -->
-        <div class="form-floating mb-3">
-            <input id="name" type="text" name="name" class="form-control bg-light" 
-                value="{{ old('name') }}" placeholder="John Doe" required autofocus autocomplete="name">
-            <label for="name" class="text-muted"><i class="bi bi-person me-2"></i>Full Name</label>
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="name" type="text" name="name" class="form-control bg-light @error('name') is-invalid @enderror" 
+                    value="{{ old('name') }}" placeholder="John Doe" required autofocus autocomplete="name">
+                <label for="name" class="text-muted"><i class="bi bi-person me-2"></i>Full Name</label>
+            </div>
+            @error('name')<div class="text-danger small mt-1 ms-2">{{ $message }}</div>@enderror
         </div>
 
         <!-- Email Address -->
-        <div class="form-floating mb-3">
-            <input id="email" type="email" name="email" class="form-control bg-light" 
-                value="{{ old('email') }}" placeholder="name@example.com" required autocomplete="username">
-            <label for="email" class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</label>
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="email" type="email" name="email" class="form-control bg-light @error('email') is-invalid @enderror" 
+                    value="{{ old('email') }}" placeholder="name@example.com" required autocomplete="username">
+                <label for="email" class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</label>
+            </div>
+            @error('email')<div class="text-danger small mt-1 ms-2">{{ $message }}</div>@enderror
         </div>
 
         <!-- Phone Number -->
-        <div class="form-floating mb-3">
-            <input id="phone" type="tel" name="phone_number" class="form-control bg-light" 
-                value="{{ old('phone_number') }}" placeholder="09123456789" required autocomplete="tel">
-            <label for="phone" class="text-muted"><i class="bi bi-telephone me-2"></i>Phone Number</label>
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="phone" type="tel" name="phone_number" class="form-control bg-light @error('phone_number') is-invalid @enderror" 
+                    value="{{ old('phone_number') }}" placeholder="09123456789" required autocomplete="tel">
+                <label for="phone" class="text-muted"><i class="bi bi-telephone me-2"></i>Phone Number</label>
+            </div>
+            @error('phone_number')<div class="text-danger small mt-1 ms-2">{{ $message }}</div>@enderror
         </div>
 
         <!-- Passwords Grid -->
         <div class="row">
             <div class="col-sm-6 mb-4">
                 <div class="form-floating">
-                    <input id="password" type="password" name="password" class="form-control bg-light" 
+                    <input id="password" type="password" name="password" class="form-control bg-light @error('password') is-invalid @enderror" 
                         placeholder="••••••••" required autocomplete="new-password">
                     <label for="password" class="text-muted"><i class="bi bi-lock me-2"></i>Password</label>
                 </div>
+                @error('password')<div class="text-danger small mt-1 ms-2">{{ $message }}</div>@enderror
             </div>
             
             <div class="col-sm-6 mb-4">

@@ -109,8 +109,16 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border mt-2 py-1"
                         aria-labelledby="breezeDropdown" style="width: 220px; border-radius: 6px;">
-                        <li><a class="dropdown-item py-2 text-muted px-4" href="{{ route('home') }}"><i
-                                    class="bi bi-map me-2"></i> Explore Tours</a></li>
+                        @if(Auth::user()->is_admin)
+                            <li>
+                                <a class="dropdown-item py-2 text-primary fw-bold px-4 d-flex align-items-center" href="{{ route('admin.bookings') }}">
+                                    <i class="bi bi-shield-lock-fill me-2 fs-6"></i> Admin Panel
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                        @endif
+                        <li><a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center" href="{{ route('home') }}"><i class="bi bi-map me-2 fs-6"></i> Explore Tours</a></li>
+                        <li><a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center" href="{{ route('profile.edit') }}"><i class="bi bi-person me-2 fs-6"></i> Profile</a></li>
                         <li>
                             <a class="dropdown-item py-2 text-primary px-4 fw-medium d-flex align-items-center justify-content-between"
                                 href="{{ route('bookings.view') }}">

@@ -11,17 +11,23 @@
         @csrf
 
         <!-- Email Address -->
-        <div class="form-floating mb-3">
-            <input id="email" type="email" name="email" class="form-control bg-light"
-                value="{{ old('email') }}" placeholder="name@example.com" required autofocus autocomplete="username">
-            <label for="email" class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</label>
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="email" type="email" name="email" class="form-control bg-light @error('email') is-invalid @enderror"
+                    value="{{ old('email') }}" placeholder="name@example.com" required autofocus autocomplete="username">
+                <label for="email" class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</label>
+            </div>
+            @error('email')<div class="text-danger small mt-1 ms-2">{{ $message }}</div>@enderror
         </div>
 
         <!-- Password -->
-        <div class="form-floating mb-3">
-            <input id="password" type="password" name="password" class="form-control bg-light"
-                placeholder="••••••••" required autocomplete="current-password">
-            <label for="password" class="text-muted"><i class="bi bi-lock me-2"></i>Password</label>
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="password" type="password" name="password" class="form-control bg-light @error('password') is-invalid @enderror"
+                    placeholder="••••••••" required autocomplete="current-password">
+                <label for="password" class="text-muted"><i class="bi bi-lock me-2"></i>Password</label>
+            </div>
+            @error('password')<div class="text-danger small mt-1 ms-2">{{ $message }}</div>@enderror
         </div>
 
         <!-- Remember Me & Forgot Password -->

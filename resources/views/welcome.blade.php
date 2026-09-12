@@ -214,7 +214,15 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border mt-2 py-1"
                         aria-labelledby="breezeDropdown" style="width: 220px; border-radius: 6px;">
-                        <li><a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center" href="#"><i
+                        @if($user->is_admin)
+                            <li>
+                                <a class="dropdown-item py-2 text-primary fw-bold px-4 d-flex align-items-center" href="{{ route('admin.bookings') }}">
+                                    <i class="bi bi-shield-lock-fill me-2 fs-6"></i> Admin Panel
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                        @endif
+                        <li><a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center" href="{{ route('profile.edit') }}"><i
                                     class="bi bi-person me-2 fs-6"></i> Profile</a></li>
                         <li>
                             <a class="dropdown-item py-2 text-muted px-4 d-flex align-items-center justify-content-between"
@@ -258,7 +266,7 @@
                     </div>
                     <!-- Action Buttons -->
                     <div class="d-flex gap-1.5 align-items-center">
-                        <a href="/test"
+                        <a href="/custom-package"
                             class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-medium shadow-sm d-flex align-items-center"
                             style="font-size: 11px;">
                             <i class="bi bi-plus-lg me-1"></i> Custom

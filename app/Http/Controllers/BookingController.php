@@ -57,11 +57,22 @@ class BookingController extends Controller
         return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification'));
     }
 
+    public function viewCustomPackage() {
+        $package = null;
+        $packages = Package::all();
+        $vehicles = Transport::where('status', 'active')->get();
+        $places = Place::all();
+        $user = Auth::user();
+        $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
+
+        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification'));
+    }
+
     public function store(Request $request) {
 
         // 1. Validate the incoming request matching your exact payload keys
         $validated = $request->validate([
-            'package_id'       => 'required|exists:packages,id',
+            'package_id'       => 'nullable|exists:packages,id',
             'vehicle_id'       => 'required|exists:transports,id',
             'pickup_latitude'  => 'required|numeric|between:-90,90',
             'pickup_longitude' => 'required|numeric|between:-180,180',

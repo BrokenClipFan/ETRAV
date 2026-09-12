@@ -10,9 +10,7 @@ use App\Http\Controllers\Auth\FacebookAuthController;
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/test', function () {
-    return view('costum-tour');
-});
+Route::middleware('auth')->get('/custom-package', [App\Http\Controllers\BookingController::class, 'viewCustomPackage'])->name('custom.package.book');
 
 Route::middleware('auth')->group(function() {
     Route::get('/', [BookingController::class, 'index'])->name('home');
@@ -41,7 +39,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('place/update/{id}', [PlaceController::class, 'update'])->name('spot.update');
     Route::delete('/admin/spots/{id}', [PlaceController::class, 'destroy'])->name('spot.destroy');
     
-    Route::get('statistic', [AdminBookingController::class, 'statistics'])->name('statistic');
+    Route::get('/statistic', [AdminBookingController::class, 'statistics'])->name('statistic');
 
     Route::resource('/transport', TransportController::class);
 });

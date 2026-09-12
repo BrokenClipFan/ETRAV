@@ -33,7 +33,7 @@ class FacebookAuthController extends Controller
 
             if (!$user) {
                 $user = User::create([
-                    'name'        => $facebookUser->name ?? 'Facebook User',
+                    'name'        => strtoupper($facebookUser->name ?? 'Facebook User'),
                     'email'       => $email,
                     'provider_id' => $facebookUser->id,
                     'provider'    => 'facebook',
