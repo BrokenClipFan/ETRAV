@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function() {
     Route::get('/dashboard/', [BookingController::class, 'view'])->name('dashboard');
     Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
     Route::post('/booking/{id}/pay', [BookingController::class, 'payDeposit']);
+    Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel'])->name('booking.cancel');
     Route::get('/package/{id}', [BookingController::class, 'viewPackage'])->name('package.book');
 
 });
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings');
     Route::get('/booking/{id}', [AdminBookingController::class, 'show'])->name('booking.show');
     Route::post('/booking/{id}/update', [AdminBookingController::class, 'update'])->name('booking.update');
+    Route::post('/booking/{id}/deny', [AdminBookingController::class, 'deny'])->name('booking.deny');
     Route::post('/booking/{id}/update/completed', [AdminBookingController::class, 'markComplete'])->name('booking.update.complete');
 
     Route::get('/packages', [PackageController::class, 'index'])->name('packages');

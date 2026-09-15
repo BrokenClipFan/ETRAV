@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom sticky-top">
     <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold text-white d-flex align-items-center gap-2" href="#">
+        <a class="navbar-brand fw-bold text-white d-flex align-items-center gap-2" href="{{ url()->current() }}">
             <i class="bi bi-shield-lock-fill"></i>
             ETRAV Admin
         </a>
@@ -17,6 +17,10 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('admin/bookings') ? 'active fw-semibold' : '' }}" href="/admin/bookings">
                         <i class="bi bi-journal-check me-1"></i> Bookings
+                        @php $pendingAdminCount = \App\Models\Booking::where('status', 'pending')->count(); @endphp
+                        @if($pendingAdminCount > 0)
+                            <span class="badge bg-danger rounded-pill ms-1" style="font-size: 0.7rem;">{{ $pendingAdminCount }}</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item">

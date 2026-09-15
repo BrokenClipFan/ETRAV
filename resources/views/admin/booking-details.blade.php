@@ -58,6 +58,9 @@
                     <i class="bi bi-printer me-1"></i> Print
                 </button>
                 @if($booking->status === 'pending')
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" data-bs-toggle="modal" data-bs-target="#denyModal">
+                        <i class="bi bi-x-circle me-1"></i> Deny Booking
+                    </button>
                     <form action="{{ route('admin.booking.update', $booking->id) }}" method="POST" class="m-0">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-check2-circle me-1"></i> Approve Booking</button>
@@ -97,6 +100,8 @@
                                 <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">Awaiting Payment</span>
                             @elseif($booking->status === 'confirmed')
                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Paid / Confirmed</span>
+                            @elseif($booking->status === 'denied')
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">Cancelled / Denied</span>
                             @else
                                 <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">{{ ucfirst($booking->status) }}</span>
                             @endif
@@ -261,5 +266,33 @@
             }
         });
     </script>
+
+    <!-- Deny Modal -->
+    <div class="modal fade" id="denyModal" tabindex="-1" aria-labelledby="denyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <form action="{{ route('admin.booking.deny', $booking->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold text-danger" id="denyModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Deny Booking</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 pt-3">
+                        <p class="text-muted small mb-3">You are about to cancel this booking and free up the vehicle. Please provide a reason to the user.</p>
+                        <div class="mb-3">
+                            <label for="admin_message" class="form-label fw-bold text-dark small">Reason / Message</label>
+                            <textarea class="form-control rounded-3" id="admin_message" name="admin_message" rows="3" placeholder="e.g., We are fully booked for this vehicle today." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Deny Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

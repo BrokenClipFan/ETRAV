@@ -25,6 +25,7 @@ class Booking extends Model
         'joiners',
         'status',
         'notify',
+        'admin_message',
     ];
 
     public function places(){

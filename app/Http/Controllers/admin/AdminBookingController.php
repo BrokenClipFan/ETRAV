@@ -9,7 +9,10 @@ use App\Models\Booking;
 class AdminBookingController extends Controller
 {
     public function index() {
-        $bookings = Booking::with(['user', 'package', 'itinerary.place'])->latest()->get();
+        $bookings = Booking::with(['user', 'package', 'itinerary.place'])
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->latest()
+            ->get();
         return view('admin.bookings', compact('bookings'));
     }
 
@@ -25,8 +28,33 @@ class AdminBookingController extends Controller
             'status' => 'approved',
             'notify' => true
         ]);
+
+        if ($booking->vehicle) {
+            $booking->vehicle->update(['status' => 'unavailable']);
+        }
         
         return redirect()->route('admin.bookings')->with('success', 'Booking Approved (Awaiting Customer Payment)');
+    }
+
+    public function deny(Request $request, $id) {
+        $request->validate([
+            'admin_message' => 'required|string|max:1000'
+        ]);
+
+        $booking = Booking::findOrFail($id);
+
+        $booking->update([
+            'status' => 'denied',
+            'notify' => true,
+            'admin_message' => $request->admin_message
+        ]);
+
+        // Just to be safe, if vehicle was assigned, make it active
+        if ($booking->vehicle) {
+            $booking->vehicle->update(['status' => 'active']);
+        }
+        
+        return redirect()->route('admin.bookings')->with('success', 'Booking Denied. Reason sent to user.');
     }
 
     public function markComplete($id) {
@@ -37,6 +65,10 @@ class AdminBookingController extends Controller
             'notify' => true,
             'amount_paid' => $booking->total_price
         ]);
+
+        if ($booking->vehicle && $booking->vehicle->status === 'unavailable') {
+            $booking->vehicle->update(['status' => 'active']);
+        }
         
         return redirect()->route('admin.bookings')->with('success', 'Booking set to Completed (Balance Marked as Paid)');
     }

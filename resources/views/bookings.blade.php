@@ -145,7 +145,7 @@
     </nav>
 
     <!-- 2. MAIN CONTAINER -->
-    <div class="container py-5">
+    <div class="container-xl py-5" style="max-width: 1100px;">
         <div class="row mb-4 align-items-center">
             <div class="col-md-6">
                 <h4 class="fw-bold text-dark mb-1">My Tour Reservations</h4>
@@ -194,6 +194,15 @@
                         class="notify-dot-absolute tab-badge-completed {{ $completedUnread ? '' : 'd-none' }}"></span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link shadow-sm border btn-sm position-relative" id="denied-tab"
+                    data-bs-toggle="pill" data-bs-target="#tab-denied" type="button" role="tab">
+                    Denied ({{ $bookings->where('status', 'denied')->count() }})
+                    @php $deniedUnread = $bookings->where('status', 'denied')->contains('notify', true); @endphp
+                    <span
+                        class="notify-dot-absolute tab-badge-denied {{ $deniedUnread ? '' : 'd-none' }}"></span>
+                </button>
+            </li>
         </ul>
 
         <!-- BOOKINGS DISPLAY PANEL -->
@@ -205,7 +214,7 @@
                     @forelse($bookings as $booking)
                         <div class="col-12">
                             <div
-                                class="card shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
+                                class="card mb-4 shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
                                 <div class="row g-0">
                                     <div class="col-md-3 bg-secondary-subtle d-flex align-items-center justify-content-center text-muted border-end position-relative"
                                         style="min-height: 140px;">
@@ -239,28 +248,43 @@
                                                 class="badge status-badge {{ $booking->status === 'pending' ? 'bg-warning-subtle text-warning border border-warning-subtle' : ($booking->status === 'confirmed' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle') }} text-uppercase">
                                                 {{ $booking->status }}
                                             </span>
-                                        </div>
-                                        <div class="row g-3 my-2 text-muted small">
+                                          </div>
+
+                                          @if($booking->admin_message && in_array($booking->status, ['denied', 'cancelled']))
+                                              <div class="mt-1 mb-3 bg-danger-subtle p-3 rounded-3 text-danger border border-danger-subtle shadow-sm">
+                                                  <div class="d-flex align-items-start gap-2">
+                                                      <i class="bi bi-x-circle-fill mt-1 fs-5"></i>
+                                                      <div>
+                                                          <strong class="d-block mb-1" style="font-size: 14px;">Reason for Rejection</strong>
+                                                          <span style="font-size: 13.5px; opacity: 0.9;">{{ $booking->admin_message }}</span>
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          @endif
+                                          <div class="row g-3 my-2 text-muted small">
                                             <div class="col-sm-4"><i class="bi bi-calendar3 text-primary me-1"></i>
-                                                Date:
-                                                <strong>{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
+                                                Date: <strong class="text-dark fs-6">{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
                                             <div class="col-sm-4"><i class="bi bi-clock text-primary me-1"></i>
-                                                Pickup:
-                                                <strong>{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
+                                                Pickup: <strong class="text-dark fs-6">{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
                                             <div class="col-sm-4"><i class="bi bi-people text-primary me-1"></i>
-                                                Travelers: <strong>{{ $booking->pax }} Heads</strong></div>
+                                                Travelers: <strong class="text-dark fs-6">{{ $booking->pax }} Passengers</strong></div>
                                         </div>
                                         <div
                                             class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top flex-wrap gap-3">
                                             <div>
-                                                <span class="text-muted small d-block">Total Price:
-                                                    ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold {{ $booking->status === 'pending' ? 'text-secondary' : ($booking->status === 'approved' ? 'text-danger' : 'text-success') }}"
-                                                    style="font-size: 15px;">
-                                                    {{ $booking->status === 'pending' ? 'Awaiting Approval' : ($booking->status === 'approved' ? '25% Deposit Due: ₱' . number_format($booking->deposit_amount, 2) : '25% Deposit Paid') }}
-                                                </div>
+                                                <span class="text-muted small d-block mb-1">Total Price</span>
+<span class="fs-5 fw-bold text-dark">&#8369;{{ number_format($booking->total_price, 2) }}</span>
+                                                @if($booking->status === 'approved')
+    <div class="fw-bold text-danger" style="font-size: 15px;">25% Deposit Due: &#8369;{{ number_format($booking->deposit_amount, 2) }}</div>
+@elseif($booking->status === 'confirmed')
+    @if($booking->amount_paid >= $booking->deposit_amount)
+        <div class="fw-bold text-success" style="font-size: 15px;"><i class="bi bi-check-circle-fill me-1"></i>25% Deposit Paid</div>
+    @else
+        <div class="fw-bold text-warning" style="font-size: 15px;"><i class="bi bi-clock-fill me-1"></i>Payment Pending</div>
+    @endif
+@endif
                                             </div>
                                             <div class="d-flex gap-2">
                                                 <button
@@ -271,24 +295,30 @@
                                                     data-status="{{ $booking->status }}"
                                                     data-title="{{ $booking->package->name ?? 'Package Specification' }}"
                                                     data-pickup="{{ $booking->pickup_place_name }}"
-                                                    data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
-                                                    data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
-                                                    data-total="₱{{ number_format($booking->total_price, 2) }}"
+                                                    data-base="&#8369;{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                    data-heads="&#8369;{{ number_format($booking->head_price, 2) }} / person"
+                                                    data-total="&#8369;{{ number_format($booking->total_price, 2) }}"
                                                     data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}">
                                                     <i class="bi bi-eye"></i> View Details
                                                 </button>
+                                                  @if(in_array($booking->status, ['denied', 'cancelled']))
+                                                      <a href="{{ $booking->package_id ? route('package.book', $booking->package_id) : route('custom.package.book') }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm"><i class="bi bi-arrow-repeat me-1"></i>Rebook</a>
+                                                  @endif
                                                 @if ($booking->status === 'approved')
                                                     <button type="button"
                                                         class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"
-                                                        onclick="openGcashModal({{ $booking->id }}, '₱{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
+                                                        onclick="openGcashModal({{ $booking->id }}, '&#8369;{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
                                                 @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
+                                            
+                                              </div>
+                                          </div>
+                                          
+                                          
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      @empty
                         <div class="col-12">
                             <div class="alert alert-light text-center py-5 rounded-4 shadow-sm border"><i
                                     class="bi bi-journal-x text-muted fs-2 d-block mb-2"></i>
@@ -305,7 +335,7 @@
                     @forelse($bookings->whereIn('status', ['pending', 'approved']) as $booking)
                         <div class="col-12">
                             <div
-                                class="card shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
+                                class="card mb-4 shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
                                 <div class="row g-0">
                                     <div class="col-md-3 bg-secondary-subtle position-relative">
                                         @if (isset($booking->package->image_path))
@@ -322,28 +352,52 @@
                                                     style="font-size: 9px;">NEW UPDATE</span>
                                             </h5>
                                             @if($booking->status === 'pending')
-                                                <span class="badge status-badge bg-warning-subtle text-warning border border-warning-subtle text-uppercase">Pending Approval</span>
+                                                @php
+$badgeClass = match($booking->status) {
+    'pending' => 'bg-primary-subtle text-primary border border-primary-subtle',
+    'approved' => 'bg-info-subtle text-info border border-info-subtle',
+    'confirmed' => 'bg-success-subtle text-success border border-success-subtle',
+    'completed' => 'bg-dark-subtle text-dark border border-dark-subtle',
+    'denied', 'cancelled' => 'bg-danger-subtle text-danger border border-danger-subtle',
+    default => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+};
+@endphp
+<span class="badge status-badge {{ $badgeClass }} text-uppercase">{{ $booking->status }}</span>
                                             @else
-                                                <span class="badge status-badge bg-info-subtle text-info border border-info-subtle text-uppercase">Awaiting Payment</span>
+                                                @php
+$badgeClass = match($booking->status) {
+    'pending' => 'bg-primary-subtle text-primary border border-primary-subtle',
+    'approved' => 'bg-info-subtle text-info border border-info-subtle',
+    'confirmed' => 'bg-success-subtle text-success border border-success-subtle',
+    'completed' => 'bg-dark-subtle text-dark border border-dark-subtle',
+    'denied', 'cancelled' => 'bg-danger-subtle text-danger border border-danger-subtle',
+    default => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+};
+@endphp
+<span class="badge status-badge {{ $badgeClass }} text-uppercase">{{ $booking->status }}</span>
                                             @endif
                                         </div>
                                         <div class="row my-2 text-muted small">
-                                            <div class="col-sm-4">Date:
-                                                <strong>{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
+                                            <div class="col-sm-4">Date: <strong class="text-dark fs-6">{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
-                                            <div class="col-sm-4">Pickup:
-                                                <strong>{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
+                                            <div class="col-sm-4">Pickup: <strong class="text-dark fs-6">{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
-                                            <div class="col-sm-4">Travelers: <strong>{{ $booking->pax }}
-                                                    Heads</strong></div>
+                                            <div class="col-sm-4">Travelers: <strong class="text-dark fs-6">{{ $booking->pax }}
+                                                    Passengers</strong></div>
                                         </div>
                                         <div
                                             class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top flex-wrap gap-3">
-                                            <div><span class="text-muted small d-block">Total Price:
-                                                    ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold {{ $booking->status === 'pending' ? 'text-secondary' : 'text-danger' }}">
-                                                    {{ $booking->status === 'pending' ? 'Awaiting Approval' : '25% Deposit Due: ₱' . number_format($booking->deposit_amount, 2) }}
-                                                </div>
+                                            <div><span class="text-muted small d-block mb-1">Total Price</span>
+<span class="fs-5 fw-bold text-dark">&#8369;{{ number_format($booking->total_price, 2) }}</span>
+                                                @if($booking->status === 'approved')
+    <div class="fw-bold text-danger" style="font-size: 15px;">25% Deposit Due: &#8369;{{ number_format($booking->deposit_amount, 2) }}</div>
+@elseif($booking->status === 'confirmed')
+    @if($booking->amount_paid >= $booking->deposit_amount)
+        <div class="fw-bold text-success" style="font-size: 15px;"><i class="bi bi-check-circle-fill me-1"></i>25% Deposit Paid</div>
+    @else
+        <div class="fw-bold text-warning" style="font-size: 15px;"><i class="bi bi-clock-fill me-1"></i>Payment Pending</div>
+    @endif
+@endif
                                             </div>
                                             <div class="d-flex gap-2">
                                                 <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 fw-medium"
@@ -352,21 +406,24 @@
                                                     data-status="{{ $booking->status }}"
                                                     data-title="{{ $booking->package->name ?? 'Custom Package' }}"
                                                     data-pickup="{{ $booking->pickup_place_name }}"
-                                                    data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
-                                                    data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
-                                                    data-total="₱{{ number_format($booking->total_price, 2) }}"
+                                                    data-base="&#8369;{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                    data-heads="&#8369;{{ number_format($booking->head_price, 2) }} / person"
+                                                    data-total="&#8369;{{ number_format($booking->total_price, 2) }}"
                                                     data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                         class="bi bi-eye"></i> View Details</button>
                                                 @if($booking->status === 'approved')
-                                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="openGcashModal({{ $booking->id }}, '₱{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
+                                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="openGcashModal({{ $booking->id }}, '&#8369;{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
                                                 @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
+                                            
+                                              </div>
+                                          </div>
+                                          
+                                          
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      @empty
                         <div class="col-12">
                             <p class="text-muted small text-center py-5 bg-white rounded-4 shadow-sm border">No pending
                                 deposits found.</p>
@@ -381,7 +438,7 @@
                     @forelse($bookings->where('status', 'confirmed') as $booking)
                         <div class="col-12">
                             <div
-                                class="card shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
+                                class="card mb-4 shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
                                 <div class="row g-0">
                                     <div class="col-md-3 bg-secondary-subtle position-relative">
                                         @if (isset($booking->package->image_path))
@@ -399,22 +456,32 @@
                                             </h5>
                                             <span
                                                 class="badge status-badge bg-success-subtle text-success border border-success-subtle text-uppercase">Confirmed</span>
-                                        </div>
-                                        <div class="row my-2 text-muted small">
-                                            <div class="col-sm-4">Date:
-                                                <strong>{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
+                                          </div>
+
+                                          @if($booking->admin_message && in_array($booking->status, ['denied', 'cancelled']))
+                                              <div class="mt-1 mb-3 bg-danger-subtle p-3 rounded-3 text-danger border border-danger-subtle shadow-sm">
+                                                  <div class="d-flex align-items-start gap-2">
+                                                      <i class="bi bi-x-circle-fill mt-1 fs-5"></i>
+                                                      <div>
+                                                          <strong class="d-block mb-1" style="font-size: 14px;">Reason for Rejection</strong>
+                                                          <span style="font-size: 13.5px; opacity: 0.9;">{{ $booking->admin_message }}</span>
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          @endif
+                                          <div class="row my-2 text-muted small">
+                                            <div class="col-sm-4">Date: <strong class="text-dark fs-6">{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
-                                            <div class="col-sm-4">Pickup:
-                                                <strong>{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
+                                            <div class="col-sm-4">Pickup: <strong class="text-dark fs-6">{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
-                                            <div class="col-sm-4">Travelers: <strong>{{ $booking->pax }}
-                                                    Heads</strong></div>
+                                            <div class="col-sm-4">Travelers: <strong class="text-dark fs-6">{{ $booking->pax }}
+                                                    Passengers</strong></div>
                                         </div>
                                         <div
                                             class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top">
-                                            <div><span class="text-muted small d-block">Total Price:
-                                                    ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold text-success">25% Deposit Paid</div>
+                                            <div><span class="text-muted small d-block mb-1">Total Price</span>
+<span class="fs-5 fw-bold text-dark">&#8369;{{ number_format($booking->total_price, 2) }}</span>
+                                                
                                             </div>
                                             <button class="btn btn-outline-secondary btn-sm rounded-pill"
                                                 onclick="viewItineraryDetails(this)" data-id="{{ $booking->id }}"
@@ -422,11 +489,14 @@
                                                 data-status="{{ $booking->status }}"
                                                 data-title="{{ $booking->package->name ?? 'Custom Package' }}"
                                                 data-pickup="{{ $booking->pickup_place_name }}"
-                                                data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
-                                                data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
-                                                data-total="₱{{ number_format($booking->total_price, 2) }}"
+                                                data-base="&#8369;{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                data-heads="&#8369;{{ number_format($booking->head_price, 2) }} / person"
+                                                data-total="&#8369;{{ number_format($booking->total_price, 2) }}"
                                                 data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                     class="bi bi-eye"></i> View Details</button>
+                                            @if(in_array($booking->status, ['pending', 'approved', 'confirmed']))
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -447,7 +517,7 @@
                     @forelse($bookings->where('status', 'completed') as $booking)
                         <div class="col-12">
                             <div
-                                class="card shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
+                                class="card mb-4 shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
                                 <div class="row g-0">
                                     <div class="col-md-3 bg-secondary-subtle position-relative">
                                         @if (isset($booking->package->image_path))
@@ -465,22 +535,32 @@
                                             </h5>
                                             <span
                                                 class="badge status-badge bg-secondary-subtle text-secondary border border-secondary-subtle text-uppercase">Completed</span>
-                                        </div>
-                                        <div class="row my-2 text-muted small">
-                                            <div class="col-sm-4">Date:
-                                                <strong>{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
+                                          </div>
+
+                                          @if($booking->admin_message && in_array($booking->status, ['denied', 'cancelled']))
+                                              <div class="mt-1 mb-3 bg-danger-subtle p-3 rounded-3 text-danger border border-danger-subtle shadow-sm">
+                                                  <div class="d-flex align-items-start gap-2">
+                                                      <i class="bi bi-x-circle-fill mt-1 fs-5"></i>
+                                                      <div>
+                                                          <strong class="d-block mb-1" style="font-size: 14px;">Reason for Rejection</strong>
+                                                          <span style="font-size: 13.5px; opacity: 0.9;">{{ $booking->admin_message }}</span>
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          @endif
+                                          <div class="row my-2 text-muted small">
+                                            <div class="col-sm-4">Date: <strong class="text-dark fs-6">{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
-                                            <div class="col-sm-4">Pickup:
-                                                <strong>{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
+                                            <div class="col-sm-4">Pickup: <strong class="text-dark fs-6">{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
                                             </div>
-                                            <div class="col-sm-4">Travelers: <strong>{{ $booking->pax }}
-                                                    Heads</strong></div>
+                                            <div class="col-sm-4">Travelers: <strong class="text-dark fs-6">{{ $booking->pax }}
+                                                    Passengers</strong></div>
                                         </div>
                                         <div
                                             class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top">
-                                            <div><span class="text-muted small d-block">Total Price:
-                                                    ₱{{ number_format($booking->total_price, 2) }}</span>
-                                                <div class="fw-bold text-success">Finished</div>
+                                            <div><span class="text-muted small d-block mb-1">Total Price</span>
+<span class="fs-5 fw-bold text-dark">&#8369;{{ number_format($booking->total_price, 2) }}</span>
+                                                
                                             </div>
                                             <button class="btn btn-outline-secondary btn-sm rounded-pill"
                                                 onclick="viewItineraryDetails(this)" data-id="{{ $booking->id }}"
@@ -488,11 +568,14 @@
                                                 data-status="{{ $booking->status }}"
                                                 data-title="{{ $booking->package->name ?? 'Custom Package' }}"
                                                 data-pickup="{{ $booking->pickup_place_name }}"
-                                                data-base="₱{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
-                                                data-heads="₱{{ number_format($booking->head_price, 2) }} / person"
-                                                data-total="₱{{ number_format($booking->total_price, 2) }}"
+                                                data-base="&#8369;{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                data-heads="&#8369;{{ number_format($booking->head_price, 2) }} / person"
+                                                data-total="&#8369;{{ number_format($booking->total_price, 2) }}"
                                                 data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                     class="bi bi-eye"></i> View Details</button>
+                                            @if(in_array($booking->status, ['pending', 'approved', 'confirmed']))
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -508,6 +591,112 @@
             </div>
         </div>
     </div>
+
+    
+            <!-- TAB: DENIED -->
+              <div class="tab-pane fade" id="tab-denied" role="tabpanel">
+                  <div class="row g-4">
+                      @forelse($bookings->where('status', 'denied') as $booking)
+                          <div class="col-12">
+                              <div
+                                  class="card mb-4 shadow-sm rounded-4 booking-card bg-white overflow-hidden booking-card-{{ $booking->id }} {{ $booking->notify ? 'border-2 border-danger' : 'border' }}">
+                                  <div class="row g-0">
+                                      <div class="col-md-3 bg-secondary-subtle d-flex align-items-center justify-content-center text-muted border-end position-relative"
+                                          style="min-height: 140px;">
+                                          @if (isset($booking->package->image_path))
+                                              <img src="{{ $booking->package->image_path }}"
+                                                  alt="{{ $booking->package->name }}"
+                                                  class="w-100 h-100 position-absolute" style="object-fit: cover;">
+                                          @else
+                                              <div class="text-center p-3">
+                                                  <i class="bi bi-image fs-1 d-block opacity-50 mb-1"></i>
+                                                  <span class="small">No Preview</span>
+                                              </div>
+                                          @endif
+                                      </div>
+                                      <div class="col-md-9 p-4">
+                                          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                              <div>
+                                                  <span class="text-muted font-monospace small d-flex align-items-center gap-2 mb-1">
+                                                      BOOKING-ID: #ETV-{{ $booking->id }}
+                                                      <span class="badge bg-danger rounded-pill px-2 notify-badge-{{ $booking->id }} {{ $booking->notify ? '' : 'd-none' }}" style="font-size: 9px; letter-spacing: 0.3px;">NEW UPDATE</span>
+                                                  </span>
+                                                  <h5 class="fw-bold text-dark mb-0">{{ $booking->package->name ?? 'Custom Package' }}</h5>
+                                              </div>
+                                              @php
+$badgeClass = match($booking->status) {
+    'pending' => 'bg-primary-subtle text-primary border border-primary-subtle',
+    'approved' => 'bg-info-subtle text-info border border-info-subtle',
+    'confirmed' => 'bg-success-subtle text-success border border-success-subtle',
+    'completed' => 'bg-dark-subtle text-dark border border-dark-subtle',
+    'denied', 'cancelled' => 'bg-danger-subtle text-danger border border-danger-subtle',
+    default => 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+};
+@endphp
+<span class="badge status-badge {{ $badgeClass }} text-uppercase">{{ $booking->status }}</span>
+                                          </div>
+
+                                          @if($booking->admin_message && in_array($booking->status, ['denied', 'cancelled']))
+                                              <div class="mt-1 mb-3 bg-danger-subtle p-3 rounded-3 text-danger border border-danger-subtle shadow-sm">
+                                                  <div class="d-flex align-items-start gap-2">
+                                                      <i class="bi bi-x-circle-fill mt-1 fs-5"></i>
+                                                      <div>
+                                                          <strong class="d-block mb-1" style="font-size: 14px;">Reason for Rejection</strong>
+                                                          <span style="font-size: 13.5px; opacity: 0.9;">{{ $booking->admin_message }}</span>
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          @endif
+                                          <div class="row g-3 my-2 text-muted small">
+                                              <div class="col-sm-4"><i class="bi bi-calendar3 text-primary me-1"></i>
+                                                  Date: <strong class="text-dark fs-6">{{ date('M d, Y', strtotime($booking->pickup_datetime)) }}</strong>
+                                              </div>
+                                              <div class="col-sm-4"><i class="bi bi-clock text-primary me-1"></i>
+                                                  Pickup: <strong class="text-dark fs-6">{{ date('h:i A', strtotime($booking->pickup_datetime)) }}</strong>
+                                              </div>
+                                              <div class="col-sm-4"><i class="bi bi-people text-primary me-1"></i>
+                                                  Travelers: <strong class="text-dark fs-6">{{ $booking->pax }} Passengers</strong></div>
+                                          </div>
+                                          <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top flex-wrap gap-3">
+                                              <div>
+                                                  <span class="text-muted small d-block mb-1">Total Price</span>
+<span class="fs-5 fw-bold text-dark">&#8369;{{ number_format($booking->total_price, 2) }}</span>
+                                                  
+                                              </div>
+                                              <div class="d-flex gap-2">
+                                                  <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-medium"
+                                                      onclick="viewItineraryDetails(this)"
+                                                      data-id="{{ $booking->id }}"
+                                                      data-notify="{{ $booking->notify ? '1' : '0' }}"
+                                                      data-status="{{ $booking->status }}"
+                                                      data-title="{{ $booking->package->name ?? 'Package Specification' }}"
+                                                      data-pickup="{{ $booking->pickup_place_name }}"
+                                                      data-base="&#8369;{{ number_format($booking->total_price, 2) }} ({{ number_format($booking->distance / 1000, 1) }} km)"
+                                                      data-heads="&#8369;{{ number_format($booking->head_price, 2) }} / person"
+                                                      data-total="&#8369;{{ number_format($booking->total_price, 2) }}"
+                                                      data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}">
+                                                      <i class="bi bi-eye"></i> View Details
+                                                  </button>
+                                                  @if(in_array($booking->status, ['denied', 'cancelled']))
+                                                      <a href="{{ $booking->package_id ? route('package.book', $booking->package_id) : route('custom.package.book') }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm"><i class="bi bi-arrow-repeat me-1"></i>Rebook</a>
+                                                  @endif
+                                              </div>
+                                          </div>
+                                          
+                                          
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      @empty
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-x-circle text-muted mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="fw-bold text-dark">No Denied Bookings</h5>
+                            <p class="text-muted mb-0">None of your bookings have been rejected.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
 
     <!-- 3. DETAILED SPECIFICATION MODAL OVERLAY -->
     <div class="modal fade" id="itineraryDetailModal" tabindex="-1" aria-hidden="true">
@@ -591,6 +780,31 @@
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+
+        let currentCancelBookingId = null;
+
+        function confirmCancel(bookingId, status) {
+            currentCancelBookingId = bookingId;
+            let messageBox = document.getElementById('cancelModalMessage');
+            
+            if(status === 'approved' || status === 'confirmed') {
+                messageBox.innerHTML = "You have already paid a deposit for this booking. <strong class='text-danger'>Deposits are strictly non-refundable.</strong> Are you absolutely sure you want to cancel?";
+            } else {
+                messageBox.innerHTML = "Are you sure you want to cancel this booking request?";
+            }
+            
+            document.getElementById('cancelBookingForm').action = "/bookings/" + bookingId + "/cancel";
+            document.getElementById('cancelCsrfToken').value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            new bootstrap.Modal(document.getElementById('cancelModal')).show();
+        }
+
+        function submitCancelForm() {
+            if (currentCancelBookingId) {
+                document.getElementById('cancelBookingForm').submit();
+            }
+        }
+
         function viewItineraryDetails(button) {
             const bookingId = button.getAttribute('data-id');
             const hasNotify = button.getAttribute('data-notify') === '1';
@@ -682,6 +896,7 @@
             let pendingUnread = false;
             let confirmedUnread = false;
             let completedUnread = false;
+            let deniedUnread = false;
 
             unreadButtons.forEach(btn => {
                 const id = btn.getAttribute('data-id');
@@ -692,6 +907,7 @@
                 if (status === 'pending') pendingUnread = true;
                 if (status === 'confirmed') confirmedUnread = true;
                 if (status === 'completed') completedUnread = true;
+                if (status === 'denied') deniedUnread = true;
             });
 
             const totalUnreadCount = unreadIds.size;
@@ -714,6 +930,7 @@
             toggleBadgeVisibility('.tab-badge-pending', pendingUnread);
             toggleBadgeVisibility('.tab-badge-confirmed', confirmedUnread);
             toggleBadgeVisibility('.tab-badge-completed', completedUnread);
+            toggleBadgeVisibility('.tab-badge-denied', typeof deniedUnread !== 'undefined' ? deniedUnread : false);
         }
 
         function toggleBadgeVisibility(selector, isVisible) {
@@ -783,6 +1000,29 @@
             }, 3000); // 3000ms = 3 seconds
         }
     </script>
+
+    <!-- Cancel Booking Modal -->
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <form id="cancelBookingForm" method="POST" action="">
+                    <input type="hidden" name="_token" id="cancelCsrfToken" value="">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Cancel Booking</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 pt-3">
+                        <p class="text-muted small mb-0" id="cancelModalMessage">Are you sure you want to cancel this booking?</p>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Keep Booking</button>
+                        <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="submitCancelForm()">Yes, Cancel It</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

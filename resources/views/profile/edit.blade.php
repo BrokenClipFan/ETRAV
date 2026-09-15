@@ -32,7 +32,7 @@
     <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top py-3 shadow-sm">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2"
-                href="{{ route('home') }}">
+                href="{{ url()->current() }}">
                 <img src="{{ asset('storage/logotext.png') }}" alt="ETRAV Logo"
                     style="height: 38px; object-fit: contain;">
             </a>

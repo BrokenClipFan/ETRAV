@@ -39,7 +39,9 @@ class BookingController extends Controller
         $user = Auth::user();
 
         $bookings = Booking::where('user_id', $user->id)
+                       ->where('status', '!=', 'cancelled')
                        ->with(['itinerary.place', 'package']) 
+                       ->orderByDesc('notify')
                        ->latest()
                        ->get();
 
@@ -222,5 +224,20 @@ class BookingController extends Controller
         $booking->save();
 
         return response()->json(['success' => true]);
+    }
+
+    public function cancel($id) {
+        $booking = Booking::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+
+        $booking->status = 'cancelled';
+        $booking->notify = false;
+        $booking->save();
+
+        // Release the vehicle if it was tied up
+        if ($booking->vehicle && $booking->vehicle->status === 'unavailable') {
+            $booking->vehicle->update(['status' => 'active']);
+        }
+
+        return redirect()->route('bookings.view')->with('success', 'Booking has been successfully cancelled.');
     }
 }

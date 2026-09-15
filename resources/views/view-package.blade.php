@@ -345,10 +345,12 @@
                         <div class="col-6">
                             <label for="pickupDate" class="form-label fw-semibold text-muted small"><i class="bi bi-calendar3 me-1 text-primary"></i> Date</label>
                             <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date') }}" required min="{{ date('Y-m-d') }}">
+                            @error('pickup_date')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-6">
                             <label for="pickupTime" class="form-label fw-semibold text-muted small"><i class="bi bi-clock me-1 text-primary"></i> Time</label>
                             <input type="time" name="pickup_time" id="pickupTime" class="form-control form-control-sm text-muted @error('pickup_time') is-invalid @enderror" value="{{ old('pickup_time') }}" required>
+                            @error('pickup_time')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
@@ -372,6 +374,7 @@
                                 <i class="bi bi-search"></i> Choose
                             </button>
                         </div>
+                        @error('vehicle_id')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                     </div>
 
                     <!-- Number of Heads -->
@@ -386,6 +389,7 @@
                             <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-plus text-primary"></i></span>
                             <input type="number" name="number_of_heads" id="numberHeads" class="form-control border-start-0 @error('number_of_heads') is-invalid @enderror" value="{{ old('number_of_heads', 1) }}" required min="1" oninput="calculateTotal()">
                         </div>
+                        @error('number_of_heads')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                     </div>
 
                     <!-- JOINER / OPEN GROUP OPTION -->
@@ -441,7 +445,7 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center bg-warning-subtle p-2 rounded-2 border border-warning-subtle">
                                 <div class="text-dark fw-bold" style="font-size: 13px;">
-                                    <i class="bi bi-cash-coin me-1 fs-6"></i> Pay Now (25% Deposit):
+                                    <i class="bi bi-cash-coin me-1 fs-6"></i> 25% Deposit (Paid After Approval):
                                 </div>
                                 <span class="fs-5 fw-black text-dark" id="modalDownpaymentPrice">₱0.00</span>
                             </div>
@@ -449,6 +453,16 @@
                     </div>
                 </div>
                     
+                    
+                    <div class="mb-3 p-3 bg-light rounded-3 border text-muted" style="font-size: 12px;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="tosCheckbox" required>
+                            <label class="form-check-label" for="tosCheckbox" style="line-height: 1.4;">
+                                <strong>Terms of Service & Cancellation Policy:</strong><br> 
+                                By submitting this request, you agree that no payment is required immediately. You must wait for the admin to approve the booking. Once approved, you will be required to pay the 25% deposit. <strong>If you cancel your booking after the 25% deposit has been paid, the deposit is strictly non-refundable.</strong>
+                            </label>
+                        </div>
+                    </div>
                     <button type="button" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;" onclick="submitBookingRequest()">
                         <i class="bi bi-calendar-check"></i> Submit Booking Request
                     </button>
@@ -1059,6 +1073,25 @@
             pickupMappingModeActive = true;
             document.getElementById('mapPickerInstruction').classList.remove('d-none');
             document.getElementById('mapPickerInstruction').classList.add('d-flex');
+
+            // Add backdrop overlay
+            let backdrop = document.getElementById('mapFocusBackdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'mapFocusBackdrop';
+                backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); z-index: 1040; transition: opacity 0.3s;';
+                document.body.appendChild(backdrop);
+            }
+            backdrop.style.display = 'block';
+
+            // Elevate map container wrapper above the backdrop
+            const mapCol = document.querySelector('.map-container').parentElement;
+            mapCol.style.position = 'relative';
+            mapCol.style.zIndex = '1050';
+            
+            // Add a subtle glow/shadow to the map wrapper
+            mapCol.classList.add('shadow-lg');
+            mapCol.style.boxShadow = '0 0 40px rgba(0,0,0,0.5)';
         }
 
         map.on('click', function(e) {
@@ -1103,6 +1136,16 @@
                 pickupMappingModeActive = false;
                 document.getElementById('mapPickerInstruction').classList.add('d-none');
                 document.getElementById('mapPickerInstruction').classList.remove('d-flex');
+
+                // Hide backdrop and reset map container
+                let backdrop = document.getElementById('mapFocusBackdrop');
+                if (backdrop) backdrop.style.display = 'none';
+
+                const mapCol = document.querySelector('.map-container').parentElement;
+                mapCol.style.zIndex = '';
+                mapCol.classList.remove('shadow-lg');
+                mapCol.style.boxShadow = '';
+
                 if (bsModalInstance) {
                     bsModalInstance.show();
                 }
@@ -1232,9 +1275,13 @@
                 
                 // Initialize SortableJS
                 if (typeof Sortable !== 'undefined') {
-                    new Sortable(itineraryContainer, {
-                        animation: 150,
+                    if (sortableItineraryInstance) {
+                        sortableItineraryInstance.destroy();
+                    }
+                    sortableItineraryInstance = new Sortable(itineraryContainer, {
+                        animation: 0,
                         ghostClass: 'sortable-ghost',
+                        forceFallback: true,
                         onEnd: function (evt) {
                             // Re-number the spots after drag and drop
                             const items = itineraryContainer.querySelectorAll('.draggable-spot-item');
@@ -1263,7 +1310,9 @@
                                 packageData[activePackageId].spots = newSpots;
                                 
                                 // Redraw map lines without fully rebuilding the form HTML
-                                focusOnPackageRoute(activePackageId);
+                                setTimeout(() => {
+                                    focusOnPackageRoute(activePackageId);
+                                }, 10);
                             }
                         }
                     });
@@ -1502,7 +1551,14 @@
                 });
         }
 
-        function submitBookingRequest() {
+                function submitBookingRequest() {
+            const form = document.getElementById('bookingForm');
+            
+            // Check native HTML5 validation (will highlight the required checkbox)
+            if (!form.reportValidity()) {
+                return;
+            }
+
             const pickupLat = document.getElementById('pickupLatitude').value;
             if (!pickupLat) {
                 alert("Please click 'Set' and select a Pickup Location on the map first.");

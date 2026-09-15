@@ -135,11 +135,12 @@
                 <p class="text-muted small mb-0">Review custom passenger configurations, pricing calculations, and itinerary allocations.</p>
             </div>
             <div class="bg-white border rounded-3 p-1 shadow-sm d-flex gap-1 flex-wrap">
-                <button class="btn btn-sm btn-primary rounded-2 px-3 filter-btn" data-filter="all">All Bookings</button>
-                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="pending">Pending</button>
+                <button class="btn btn-sm btn-primary rounded-2 px-3 filter-btn" data-filter="pending">Pending</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="approved">Approved</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="confirmed">Paid</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="completed">Completed</button>
+                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="denied">Denied</button>
+                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="all">All Bookings</button>
             </div>
         </div>
 
@@ -248,6 +249,12 @@
                     }
                 });
             });
+
+            // Trigger default filter to show 'pending' first
+            const defaultFilter = document.querySelector('.filter-btn[data-filter="pending"]');
+            if (defaultFilter) {
+                defaultFilter.click();
+            }
 
             // --- 2. MODAL DYNAMIC DATA HYDRATION ---
             const editButtons = document.querySelectorAll('.edit-manifest-btn');
