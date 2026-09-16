@@ -197,13 +197,17 @@
                     <input type="hidden" name="attached_spot_ids" id="attachedSpotsPayload">
 
                     <div class="row">
-                        <div class="col-7 mb-2">
+                        <div class="col-5 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Package Name</label>
                             <input type="text" name="name" id="inputName"
                                 class="form-control rounded-3 form-control-sm" placeholder="e.g., South Cebu Tour"
                                 required>
                         </div>
-                        <div class="col-5 mb-2">
+                        <div class="col-3 mb-2">
+                            <label class="form-label text-muted small fw-bold mb-1">Price (?)</label>
+                            <input type="number" name="package_price" id="inputPrice" class="form-control rounded-3 form-control-sm" placeholder="e.g. 500" required>
+                        </div>
+                        <div class="col-4 mb-2">
                             <label class="form-label text-muted small fw-bold mb-1">Package Type</label>
                             <select name="type" id="selectType" class="form-select rounded-3 form-control-sm"
                                 style="font-size: 13px;" required>
@@ -882,6 +886,7 @@
             document.getElementById('formPackageId').value = packageData.id;
             document.getElementById('inputName').value = packageData.name;
             document.getElementById('selectType').value = packageData.type || '';
+            document.getElementById('inputPrice').value = packageData.package_price || '';
             document.getElementById('textareaDescription').value = packageData.description || '';
 
             const submitBtn = document.getElementById('formSubmitBtn');

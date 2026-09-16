@@ -17,10 +17,15 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('admin/bookings') ? 'active fw-semibold' : '' }}" href="/admin/bookings">
                         <i class="bi bi-journal-check me-1"></i> Bookings
-                        @php $pendingAdminCount = \App\Models\Booking::where('status', 'pending')->count(); @endphp
+                        @php $pendingAdminCount = \App\Models\Booking::where('status', 'pending')->orWhere('admin_notify', true)->count(); @endphp
                         @if($pendingAdminCount > 0)
                             <span class="badge bg-danger rounded-pill ms-1" style="font-size: 0.7rem;">{{ $pendingAdminCount }}</span>
                         @endif
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('admin/calendar') ? 'active fw-semibold' : '' }}" href="/admin/calendar">
+                        <i class="bi bi-calendar-check me-1"></i> Calendar
                     </a>
                 </li>
                 <li class="nav-item">

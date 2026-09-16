@@ -269,13 +269,16 @@
                     <p class="small mb-0 opacity-75">Complete the form below to finalize your booking.</p>
                 </div>
                 
-                <form action="{{ route('booking.store') }}" method="POST" id="bookingForm" class="flex-grow-1 overflow-auto p-3 position-relative">
+                <form action="{{ isset($editBooking) ? route('booking.update.custom', $editBooking->id) : route('booking.store') }}" method="POST" id="bookingForm" class="flex-grow-1 overflow-auto p-3 position-relative">
                     @csrf
+                    @if(isset($editBooking))
+                        @method('PUT')
+                    @endif
                     <input type="hidden" name="package_id" id="modalPackageId" value="{{ $package->id ?? old('package_id') }}">
-                    <input type="hidden" name="pickup_latitude" id="pickupLatitude" value="{{ old('pickup_latitude') }}">
-                    <input type="hidden" name="pickup_longitude" id="pickupLongitude" value="{{ old('pickup_longitude') }}">
-                    <input type="hidden" name="pickup_place_name" id="pickupPlaceName" value="{{ old('pickup_place_name') }}">
-                    <input type="hidden" name="total_distance" id="totalDistanceInput" value="0">
+                    <input type="hidden" name="pickup_latitude" id="pickupLatitude" value="{{ old('pickup_latitude', $editBooking->latitude ?? '') }}">
+                    <input type="hidden" name="pickup_longitude" id="pickupLongitude" value="{{ old('pickup_longitude', $editBooking->longitude ?? '') }}">
+                    <input type="hidden" name="pickup_place_name" id="pickupPlaceName" value="{{ old('pickup_place_name', $editBooking->pickup_place_name ?? '') }}">
+                    <input type="hidden" name="total_distance" id="totalDistanceInput" value="{{ old('total_distance', $editBooking->distance ?? 0) }}">
 
                     @if ($errors->has('package_id') || $errors->has('pickup_latitude') || $errors->has('pickup_longitude'))
                         <div class="alert alert-danger rounded-3 p-2.5 mb-3 small d-flex align-items-center gap-2" role="alert">
@@ -344,12 +347,12 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label for="pickupDate" class="form-label fw-semibold text-muted small"><i class="bi bi-calendar3 me-1 text-primary"></i> Date</label>
-                            <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date') }}" required min="{{ date('Y-m-d') }}">
+                            <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('Y-m-d') : '') }}" required min="{{ date('Y-m-d') }}">
                             @error('pickup_date')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-6">
                             <label for="pickupTime" class="form-label fw-semibold text-muted small"><i class="bi bi-clock me-1 text-primary"></i> Time</label>
-                            <input type="time" name="pickup_time" id="pickupTime" class="form-control form-control-sm text-muted @error('pickup_time') is-invalid @enderror" value="{{ old('pickup_time') }}" required>
+                            <input type="time" name="pickup_time" id="pickupTime" class="form-control form-control-sm text-muted @error('pickup_time') is-invalid @enderror" value="{{ old('pickup_time', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('H:i') : '') }}" required>
                             @error('pickup_time')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                     </div>
@@ -359,7 +362,7 @@
                         <label class="form-label fw-semibold text-muted small">
                             <i class="bi bi-car-front me-1 text-primary"></i> Transport Vehicle
                         </label>
-                        <input type="hidden" name="vehicle_id" id="vehicleSelect" value="{{ old('vehicle_id') }}" required>
+                        <input type="hidden" name="vehicle_id" id="vehicleSelect" value="{{ old('vehicle_id', $editBooking->vehicle_id ?? '') }}" required>
                         <div class="p-2 border rounded-3 bg-white d-flex align-items-center justify-content-between @error('vehicle_id') border-danger @enderror" id="selectedVehicleDisplayBox">
                             <div class="d-flex align-items-center gap-2 overflow-hidden me-2" style="min-width: 0;">
                                 <div id="selectedVehicleImg" class="rounded bg-light d-flex align-items-center justify-content-center text-muted overflow-hidden" style="width: 36px; height: 36px; flex-shrink: 0;">
@@ -379,16 +382,21 @@
 
                     <!-- Number of Heads -->
                     <div class="mb-3">
+                    <!-- Passengers -->
+                    <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="numberHeads" class="form-label fw-semibold text-muted small mb-0"><i class="bi bi-people me-1 text-primary"></i> Number of Heads</label>
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1" style="font-size: 10px;">
                                 <i class="bi bi-people-fill me-1"></i> Max: <span id="modalPaxLimitLabel">0 pax</span>
                             </span>
                         </div>
-                        <div class="input-group input-group-sm has-validation">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-plus text-primary"></i></span>
-                            <input type="number" name="number_of_heads" id="numberHeads" class="form-control border-start-0 @error('number_of_heads') is-invalid @enderror" value="{{ old('number_of_heads', 1) }}" required min="1" oninput="calculateTotal()">
+                        <label for="paxInput" class="form-label fw-semibold text-muted small"><i class="bi bi-people me-1 text-primary"></i> Number of Passengers</label>
+                        <div class="input-group input-group-sm w-50">
+                            <button class="btn btn-outline-secondary" type="button" onclick="adjustPax(-1)">-</button>
+                            <input type="number" name="number_of_heads" id="paxInput" class="form-control form-control-sm text-center fw-medium @error('number_of_heads') is-invalid @enderror" value="{{ old('number_of_heads', $editBooking->pax ?? 1) }}" min="1" max="20" required onchange="validatePax()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="adjustPax(1)">+</button>
                         </div>
+                        <div id="paxWarning" class="form-text text-danger d-none fw-medium small mt-1"><i class="bi bi-exclamation-triangle"></i> This exceeds the selected vehicle's capacity.</div>
                         @error('number_of_heads')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                     </div>
 
@@ -464,7 +472,7 @@
                         </div>
                     </div>
                     <button type="button" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;" onclick="submitBookingRequest()">
-                        <i class="bi bi-calendar-check"></i> Submit Booking Request
+                        <i class="bi bi-calendar-check"></i> {{ isset($editBooking) ? 'Update Booking' : 'Submit Booking Request' }}
                     </button>
                 </form>
             </div>
@@ -625,10 +633,30 @@
                 package_price: {{ $package->package_price ?? 0 }},
                 max_pax: {{ $package->max_pax ?? ($package->pax_limit ?? ($package->capacity ?? 10)) }},
                 spots: [
-                    @if(isset($package->places))
+                    @if(isset($editBooking) && $editBooking->is_custom)
+                        @foreach ($editBooking->itinerary as $spot)
+                            {
+                                id: "{{ $spot->place_id ?: 'custom_'.$spot->id }}",
+                                isCustom: {{ $spot->place_id ? 'false' : 'true' }},
+                                name: {!! json_encode($spot->place ? $spot->place->name : $spot->custom_name) !!},
+                                category: {!! json_encode($spot->place ? ($spot->place->category ?? 'other') : ($spot->custom_category ?? 'custom')) !!},
+                                description: {!! json_encode($spot->place ? ($spot->place->description ?? '') : '') !!},
+                                @php
+                                    $hrs = floor($spot->stay_duration / 60);
+                                    $mins = $spot->stay_duration % 60;
+                                    $dur = $hrs . 'h ' . $mins . 'm';
+                                @endphp
+                                duration: {!! json_encode($dur) !!},
+                                image: {!! json_encode($spot->place ? ($spot->place->image_path ?? '') : '') !!},
+                                lat: {{ $spot->place ? ($spot->place->latitude ?? 0) : ($spot->custom_latitude ?? 0) }},
+                                lng: {{ $spot->place ? ($spot->place->longitude ?? 0) : ($spot->custom_longitude ?? 0) }}
+                            },
+                        @endforeach
+                    @elseif(isset($package->places))
                         @foreach ($package->places as $place)
                             {
                                 id: {{ $place->id }},
+                                isCustom: false,
                                 name: {!! json_encode($place->name) !!},
                                 category: {!! json_encode($place->category ?? 'other') !!},
                                 description: {!! json_encode($place->description ?? '') !!},

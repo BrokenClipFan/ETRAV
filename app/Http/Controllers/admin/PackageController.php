@@ -23,6 +23,7 @@ class PackageController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'package_price' => 'required|numeric|min:0',
             'type' => 'required|string|max:255',
             'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
             'description' => 'required|string|max:255',
@@ -63,6 +64,7 @@ class PackageController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'package_price' => 'required|numeric|min:0',
             'type' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'description' => 'required|string|max:255',

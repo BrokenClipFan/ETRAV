@@ -1,4 +1,8 @@
 <?php
+Route::get('/test-render', function() {
+$p = App\Models\Package::find(7);
+return view('view-package', ['package' => $p, 'packages' => App\Models\Package::all(), 'vehicles' => App\Models\Transport::where('status', 'active')->get(), 'places' => App\Models\Place::all(), 'user' => App\Models\User::first(), 'hasNotification' => false, 'bookedDates' => collect()]);
+});
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PackageController;
@@ -19,6 +23,8 @@ Route::middleware('auth')->group(function() {
     Route::get('/bookings/', [BookingController::class, 'view'])->name('bookings.view');
     Route::get('/dashboard/', [BookingController::class, 'view'])->name('dashboard');
     Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
+    Route::get('/booking/{id}/edit', [BookingController::class, 'editCustomPackage'])->name('booking.edit');
+    Route::put('/booking/{id}/update', [BookingController::class, 'updateCustomBooking'])->name('booking.update.custom');
     Route::post('/booking/{id}/pay', [BookingController::class, 'payDeposit']);
     Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel'])->name('booking.cancel');
     Route::get('/package/{id}', [BookingController::class, 'viewPackage'])->name('package.book');
@@ -29,6 +35,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings');
     Route::get('/booking/{id}', [AdminBookingController::class, 'show'])->name('booking.show');
     Route::post('/booking/{id}/update', [AdminBookingController::class, 'update'])->name('booking.update');
+    Route::post('/booking/{id}/set-price', [AdminBookingController::class, 'setPrice'])->name('booking.set-price');
     Route::post('/booking/{id}/deny', [AdminBookingController::class, 'deny'])->name('booking.deny');
     Route::post('/booking/{id}/update/completed', [AdminBookingController::class, 'markComplete'])->name('booking.update.complete');
 
@@ -42,6 +49,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/admin/spots/{id}', [PlaceController::class, 'destroy'])->name('spot.destroy');
     
     Route::get('/statistic', [AdminBookingController::class, 'statistics'])->name('statistic');
+
+    Route::get('/calendar', [AdminBookingController::class, 'calendar'])->name('calendar');
+    Route::get('/calendar/events', [AdminBookingController::class, 'calendarEvents'])->name('calendar.events');
 
     Route::resource('/transport', TransportController::class);
 });

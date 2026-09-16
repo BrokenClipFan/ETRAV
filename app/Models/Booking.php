@@ -25,6 +25,9 @@ class Booking extends Model
         'joiners',
         'status',
         'notify',
+        'admin_notify',
+        'quoted_price',
+        'is_custom',
         'admin_message',
     ];
 

@@ -144,7 +144,14 @@
             </div>
         </div>
 
-        <div class="table-responsive bg-white rounded-4 shadow-sm border mb-4">
+        
+        @php
+            $customBookings = $bookings->where('is_custom', true);
+            $normalBookings = $bookings->where('is_custom', false);
+        @endphp
+
+        <h5 class="fw-bold mb-3 mt-4 text-warning-emphasis"><i class="bi bi-tools me-2"></i> Custom Route Bookings</h5>
+        <div class="table-responsive custom-table-wrapper" style="max-height: 400px; min-height: 400px; overflow-y: auto;">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
@@ -157,8 +164,8 @@
                         <th class="px-4 py-3 text-muted small fw-bold border-bottom-0 text-end">Action</th>
                     </tr>
                 </thead>
-                <tbody id="manifestTableBody">
-                    @forelse($bookings as $booking)
+                <tbody class="manifestTableBody">
+                    @forelse($customBookings as $booking)
                         <tr class="booking-table-row" data-status="{{ $booking->status }}">
                             <td class="px-4 py-3 fw-bold text-dark">#BKG-{{ $booking->id }}</td>
                             <td class="px-4 py-3">
@@ -194,7 +201,7 @@
                         </tr>
                     @endforelse
                     
-                    <tr id="jsEmptyTableRow" class="d-none no-print">
+                    <tr class="d-none no-print jsEmptyTableRow" class="d-none no-print">
                         <td colspan="7" class="text-center py-5">
                             <i class="bi bi-folder-x fs-2 text-muted opacity-50 d-block mb-2"></i>
                             <span class="text-muted">No entries match this status filter.</span>
@@ -203,6 +210,68 @@
                 </tbody>
             </table>
         </div>
+
+        <h5 class="fw-bold mb-3 mt-5 text-dark"><i class="bi bi-card-checklist me-2"></i> Standard Bookings</h5>
+        <div class="table-responsive custom-table-wrapper" style="max-height: 400px; min-height: 400px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">ID</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Client Name</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Trip Package</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Target Date</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Passengers</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0">Status</th>
+                        <th class="px-4 py-3 text-muted small fw-bold border-bottom-0 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="manifestTableBody">
+                    @forelse($normalBookings as $booking)
+                        <tr class="booking-table-row" data-status="{{ $booking->status }}">
+                            <td class="px-4 py-3 fw-bold text-dark">#BKG-{{ $booking->id }}</td>
+                            <td class="px-4 py-3">
+                                <div class="fw-bold text-dark">{{ $booking->user->name ?? 'Unknown Client' }}</div>
+                                <div class="small text-muted">{{ $booking->user->email ?? 'N/A' }}</div>
+                            </td>
+                            <td class="px-4 py-3 fw-medium text-dark">{{ $booking->package->name ?? 'Custom Package Bundle' }}</td>
+                            <td class="px-4 py-3 text-muted">{{ date('F d, Y', strtotime($booking->pickup_datetime)) }}</td>
+                            <td class="px-4 py-3 text-muted">{{ $booking->pax }} Pax</td>
+                            <td>
+                                @if($booking->status === 'pending')
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">🟡 Pending Approval</span>
+                                @elseif($booking->status === 'approved')
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2">🔵 Awaiting Payment</span>
+                                @elseif($booking->status === 'confirmed')
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">🟢 Paid / Confirmed</span>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">⚫ {{ ucfirst($booking->status) }}</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-end">
+                                <a href="{{ route('admin.booking.show', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium">
+                                    <i class="bi bi-eye me-1"></i> View Info
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr id="noBookingsRow">
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bi bi-folder-x fs-2 text-muted opacity-50 d-block mb-2"></i>
+                                <span class="text-muted">No processing workflows match your collection parameters right now.</span>
+                            </td>
+                        </tr>
+                    @endforelse
+                    
+                    <tr class="d-none no-print jsEmptyTableRow" class="d-none no-print">
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-folder-x fs-2 text-muted opacity-50 d-block mb-2"></i>
+                            <span class="text-muted">No entries match this status filter.</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
 
     </div>
 
@@ -214,9 +283,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             // --- 1. FILTER TABS LOGIC ---
             const filterButtons = document.querySelectorAll('.filter-btn');
-            const cardItems = document.querySelectorAll('.booking-table-row');
-            const jsEmptyAlert = document.getElementById('jsEmptyTableRow');
-            const baseAlert = document.getElementById('noBookingsRow');
+            const tbodies = document.querySelectorAll('.manifestTableBody');
 
             filterButtons.forEach(btn => {
                 btn.addEventListener('click', function () {
@@ -228,29 +295,33 @@
                     this.classList.add('btn-primary');
 
                     const targetStatus = this.getAttribute('data-filter');
-                    let visibleCount = 0;
 
-                    cardItems.forEach(card => {
-                        const cardStatus = card.getAttribute('data-status');
-                        if (targetStatus === 'all' || cardStatus === targetStatus) {
-                            card.classList.remove('d-none');
-                            visibleCount++;
-                        } else {
-                            card.classList.add('d-none');
+                    tbodies.forEach(tbody => {
+                        const rows = tbody.querySelectorAll('.booking-table-row');
+                        const emptyRow = tbody.querySelector('.jsEmptyTableRow');
+                        let visibleCount = 0;
+
+                        rows.forEach(card => {
+                            const cardStatus = card.getAttribute('data-status');
+                            if (targetStatus === 'all' || cardStatus === targetStatus || (targetStatus === 'pending' && ['pending', 'pending_price', 'pending_downpayment'].includes(cardStatus))) {
+                                card.classList.remove('d-none');
+                                visibleCount++;
+                            } else {
+                                card.classList.add('d-none');
+                            }
+                        });
+
+                        if (emptyRow) {
+                            if (visibleCount === 0) {
+                                emptyRow.classList.remove('d-none');
+                            } else {
+                                emptyRow.classList.add('d-none');
+                            }
                         }
                     });
-
-                    if (baseAlert) baseAlert.classList.add('d-none');
-                    
-                    if (visibleCount === 0) {
-                        jsEmptyAlert.classList.remove('d-none');
-                    } else {
-                        jsEmptyAlert.classList.add('d-none');
-                    }
                 });
             });
 
-            // Trigger default filter to show 'pending' first
             const defaultFilter = document.querySelector('.filter-btn[data-filter="pending"]');
             if (defaultFilter) {
                 defaultFilter.click();

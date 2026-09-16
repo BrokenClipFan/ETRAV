@@ -11,7 +11,8 @@ class Package extends Model
         'name',
         'type',
         'image_path',
-        'description'
+        'description',
+        'package_price'
     ];
 
     public function places()

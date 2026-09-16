@@ -13,13 +13,21 @@
         .map-container { border-radius: 1rem; overflow: hidden; height: 600px; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
-        .timeline-dot { position: relative; padding-left: 20px; padding-bottom: 15px; }
+        .timeline-dot { position: relative; padding-left: 30px; padding-bottom: 15px; }
         .timeline-dot::before {
-            content: ''; position: absolute; left: 0; top: 4px; width: 10px; height: 10px;
-            background-color: #0d6efd; border-radius: 50%; z-index: 2;
+            content: attr(data-index); position: absolute; left: 0; top: 0px; width: 22px; height: 22px;
+            background-color: #0d6efd; border-radius: 50%; z-index: 2; color: white; font-size: 11px;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
         }
+        .waypoint-item:hover { background-color: #f8f9fa; border-radius: 4px; padding-right: 10px; margin-left: -5px; padding-left: 35px; }
+        .waypoint-item:hover::before { transform: scale(1.1); box-shadow: 0 0 10px rgba(13,110,253,0.5); }
+        .timeline-dot[data-index="0"]::before { background-color: #ffc107; color: #000; }
+        .timeline-dot:not(:last-child)::after { left: 10px; top: 22px; }
+        .custom-category-pin { font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .pin-bounce { transform: scale(1.3) translateY(-8px) !important; z-index: 9999 !important; box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
+        
         .timeline-dot:not(:last-child)::after {
-            content: ''; position: absolute; left: 4px; top: 14px; width: 2px; height: calc(100% - 10px);
+            content: ''; position: absolute; left: 10px; top: 22px; width: 2px; height: calc(100% - 10px);
             background-color: #e2e8f0; z-index: 1;
         }
 
@@ -39,6 +47,10 @@
             body { background: #fff !important; }
             .col-xl-5, .col-xl-7 { width: 100% !important; margin-bottom: 20px !important; }
         }
+    
+        @media (min-width: 1200px) {
+            .tab-pane { display: block !important; opacity: 1 !important; visibility: visible !important; }
+        }
     </style>
 </head>
 <body>
@@ -50,33 +62,51 @@
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
                 <a href="{{ route('admin.bookings') }}" class="btn btn-sm btn-light border text-muted mb-2 no-print"><i class="bi bi-arrow-left me-1"></i>Back to Bookings</a>
-                <h4 class="fw-bold text-dark mb-1">Booking #BKG-{{ $booking->id }}</h4>
+                <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2 flex-wrap">
+            Booking #BKG-{{ $booking->id }}
+            
+                            @if($booking->status === 'pending')
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Pending Approval</span>
+                            @elseif($booking->status === 'approved')
+                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">Awaiting Payment</span>
+                            @elseif($booking->status === 'confirmed')
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Paid / Confirmed</span>
+                            @elseif($booking->status === 'denied')
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">Cancelled / Denied</span>
+                            @else
+                                @if($booking->status === 'pending_price')
+        <span class="badge bg-warning text-dark border border-warning rounded-pill px-2 shadow-sm"><i class="bi bi-tag-fill me-1"></i> Needs Custom Quote</span>
+    @else
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">{{ ucfirst($booking->status) }}</span>
+    @endif
+                            @endif
+                        
+        </h4>
                 <p class="text-muted small mb-0">{{ $booking->package->name ?? 'Custom Itinerary' }}</p>
             </div>
-            <div class="no-print d-flex gap-2">
+            <div class="no-print d-none d-xl-flex gap-2">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4 fw-medium" onclick="window.print()">
                     <i class="bi bi-printer me-1"></i> Print
                 </button>
-                @if($booking->status === 'pending')
-                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" data-bs-toggle="modal" data-bs-target="#denyModal">
-                        <i class="bi bi-x-circle me-1"></i> Deny Booking
-                    </button>
-                    <form action="{{ route('admin.booking.update', $booking->id) }}" method="POST" class="m-0">
-                        @csrf
-                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-check2-circle me-1"></i> Approve Booking</button>
-                    </form>
-                @elseif($booking->status === 'approved' || $booking->status === 'confirmed')
-                    <form action="{{ route('admin.booking.update.complete', $booking->id) }}" method="POST" class="m-0">
-                        @csrf
-                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-patch-check me-1"></i> Mark Completed</button>
-                    </form>
-                @endif
             </div>
         </div>
 
+        
+        <!-- Mobile Tabs -->
+        <ul class="nav nav-pills nav-fill mb-4 d-xl-none bg-white p-1 rounded-3 shadow-sm border" id="mobileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-medium rounded-2" id="details-tab" data-bs-toggle="pill" data-bs-target="#details-pane" type="button" role="tab">Details</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-medium rounded-2" id="map-tab" data-bs-toggle="pill" data-bs-target="#map-pane" type="button" role="tab">Map View</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="mobileTabsContent">
+
         <div class="row g-4">
             <!-- Left Panel: Details -->
-            <div class="col-12 col-xl-4">
+            <div class="col-12 col-xl-4 tab-pane fade show active" id="details-pane" role="tabpanel" tabindex="0">
                 <div class="bg-white rounded-4 shadow-sm border p-4 mb-4">
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-person-badge me-2 text-primary"></i>Passenger Details</h6>
                     <div class="row g-3 mb-3">
@@ -92,20 +122,7 @@
                             <span class="text-muted small d-block">Group Size</span>
                             <strong class="text-dark">{{ $booking->pax }} Passengers</strong>
                         </div>
-                        <div class="col-6">
-                            <span class="text-muted small d-block">Status</span>
-                            @if($booking->status === 'pending')
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Pending Approval</span>
-                            @elseif($booking->status === 'approved')
-                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">Awaiting Payment</span>
-                            @elseif($booking->status === 'confirmed')
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Paid / Confirmed</span>
-                            @elseif($booking->status === 'denied')
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">Cancelled / Denied</span>
-                            @else
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">{{ ucfirst($booking->status) }}</span>
-                            @endif
-                        </div>
+                        
                         <div class="col-12 border-top pt-2 mt-2">
                             <span class="text-muted small d-block">Vehicle Assigned</span>
                             <strong class="text-dark"><i class="bi bi-car-front-fill me-1"></i> {{ $booking->vehicle ? $booking->vehicle->brand . ' ' . $booking->vehicle->model : 'N/A' }} ({{ $booking->vehicle->plate_number ?? 'No Plate' }})</strong>
@@ -137,12 +154,44 @@
                         <span>Remaining Balance:</span>
                         <span class="text-primary">₱{{ number_format($booking->total_price - $booking->amount_paid, 2) }}</span>
                     </div>
+
+                    <div class="mt-3 pt-3 border-top d-none d-xl-block">
+                        @if($booking->status === 'pending_price')
+                            <form action="{{ route('admin.booking.set-price', $booking->id) }}" method="POST" class="mt-3">
+                                @csrf
+                                <label class="form-label small fw-bold text-dark mb-1">Send Custom Quote</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">₱</span>
+                                    <input type="number" name="quoted_price" class="form-control" placeholder="Enter full trip price" required min="0">
+                                    <button class="btn btn-warning fw-medium text-dark px-4" type="submit"><i class="bi bi-send-fill me-1"></i> Send</button>
+                                </div>
+                            </form>
+                        @endif
+                        <div class="mt-3">
+                            @if($booking->status === 'pending_price' || $booking->status === 'pending' || $booking->status === 'pending_downpayment')
+                                <button type="button" class="btn btn-outline-danger fw-medium shadow-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#denyModal">
+                                    <i class="bi bi-x-circle me-1"></i> Deny Booking
+                                </button>
+                            @endif
+                            @if($booking->status === 'pending')
+                            <form action="{{ route('admin.booking.update', $booking->id) }}" method="POST" class="m-0">
+                                @csrf
+                                <button type="submit" class="btn btn-primary fw-medium shadow-sm w-100"><i class="bi bi-check2-circle me-1"></i> Approve Booking</button>
+                            </form>
+                            @elseif($booking->status === 'approved' || $booking->status === 'confirmed')
+                            <form action="{{ route('admin.booking.update.complete', $booking->id) }}" method="POST" class="m-0">
+                                @csrf
+                                <button type="submit" class="btn btn-success fw-medium shadow-sm w-100"><i class="bi bi-patch-check me-1"></i> Mark Completed</button>
+                            </form>
+                            @endif
+                        </div>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-4 shadow-sm border p-4">
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-signpost-split me-2 text-primary"></i>Itinerary Route</h6>
                     
-                    <div class="timeline-dot fw-bold text-primary mb-2">
+                    <div class="timeline-dot fw-bold text-primary mb-2 waypoint-item" data-index="0" style="cursor:pointer; transition: 0.2s;">
                         <div>{{ $booking->pickup_place_name }}</div>
                         <small class="text-muted fw-normal">Pickup Location (Start)</small>
                     </div>
@@ -152,7 +201,7 @@
                             $name = $item->place ? $item->place->name : ($item->custom_name ?? 'Custom Stop');
                             $desc = $item->place ? ($item->place->description ?? 'Included destination.') : ($item->custom_category ? ucfirst($item->custom_category) . ' Stop' : 'Custom destination.');
                         @endphp
-                        <div class="timeline-dot fw-medium text-dark">
+                        <div class="timeline-dot fw-medium text-dark waypoint-item" data-index="{{ $loop->iteration }}" style="cursor:pointer; transition: 0.2s;">
                             <div>{{ $name }}</div>
                             <small class="text-muted fw-normal">{{ Str::limit($desc, 60) }}</small>
                         </div>
@@ -163,7 +212,7 @@
             </div>
 
             <!-- Right Panel: Live Map -->
-            <div class="col-12 col-xl-8">
+            <div class="col-12 col-xl-8 tab-pane fade" id="map-pane" role="tabpanel" tabindex="0">
                 <div class="bg-white rounded-4 shadow-sm border p-3 h-100">
                     <div class="map-container position-relative h-100" style="min-height: 600px;">
                         <div id="map"></div>
@@ -183,22 +232,24 @@
             }).addTo(map);
 
             const bounds = [];
+            window.mapMarkers = {}; // Object to store markers by index
 
             // 1. Pickup Location
-            const pickupLat = {{ $booking->latitude ?? 'null' }};
-            const pickupLng = {{ $booking->longitude ?? 'null' }};
+            const pickupLat = {{ $booking->latitude ?: 'null' }};
+            const pickupLng = {{ $booking->longitude ?: 'null' }};
             if(pickupLat && pickupLng) {
                 const pickupIcon = L.divIcon({
-                    html: `<div class="custom-category-pin" style="background-color: #ffc107; color: #000;"><i class="bi bi-person-raised-hand"></i></div>`,
+                    html: `<div class="custom-category-pin" style="background-color: #ffc107; color: #000;">0</div>`,
                     className: 'custom-pin-container',
                     iconSize: [36, 36],
                     iconAnchor: [18, 18],
                 });
 
-                L.marker([pickupLat, pickupLng], {icon: pickupIcon, zIndexOffset: 1000})
+                const pickupMarker = L.marker([pickupLat, pickupLng], {icon: pickupIcon, zIndexOffset: 1000})
                  .addTo(map)
-                 .bindTooltip("Pickup Location", { permanent: true, direction: 'top', className: 'custom-pickup-label', offset: [0, -15] });
+                 .bindTooltip("Pickup Location", { direction: 'top', className: 'custom-pickup-label fw-bold', offset: [0, -15] });
                  
+                window.mapMarkers[0] = pickupMarker;
                 bounds.push([pickupLat, pickupLng]);
             }
 
@@ -235,23 +286,54 @@
                     const style = categoryColors[spot.category] || categoryColors['default'];
                     
                     const icon = L.divIcon({
-                        html: `<div class="custom-category-pin" style="background-color: ${style.color};"><i class="bi ${style.icon}"></i></div>
-                               <div style="position:absolute; top:-8px; right:-8px; background:white; color:black; border-radius:50%; width:18px; height:18px; font-size:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.2);">${index + 1}</div>`,
+                        html: `<div class="custom-category-pin" style="background-color: ${style.color}; color: white;">${index + 1}</div>`,
                         className: 'custom-pin-container',
                         iconSize: [36, 36],
                         iconAnchor: [18, 18],
                     });
 
-                    L.marker([spot.lat, spot.lng], {icon: icon})
+                    const marker = L.marker([spot.lat, spot.lng], {icon: icon})
                      .addTo(map)
-                     .bindPopup(`<b>${spot.name}</b><br>Stop #${index + 1}`);
+                     .bindTooltip(`${spot.name}`, { direction: 'top', className: 'fw-bold', offset: [0, -15] });
                      
+                    window.mapMarkers[index + 1] = marker;
                     bounds.push([spot.lat, spot.lng]);
                     routePoints.push([spot.lat, spot.lng]);
                 }
             });
 
             // Draw Route Line
+            
+            // Initialize Hover Events
+            setTimeout(() => {
+                map.invalidateSize();
+                document.querySelectorAll('.waypoint-item').forEach(el => {
+                    const idx = el.getAttribute('data-index');
+                    el.addEventListener('mouseenter', () => {
+                        const marker = window.mapMarkers[idx];
+                        if(marker) {
+                            marker.openTooltip();
+                            const iconEl = marker.getElement().querySelector('.custom-category-pin');
+                            if(iconEl) iconEl.classList.add('pin-bounce');
+                        }
+                    });
+                    el.addEventListener('mouseleave', () => {
+                        const marker = window.mapMarkers[idx];
+                        if(marker) {
+                            marker.closeTooltip();
+                            const iconEl = marker.getElement().querySelector('.custom-category-pin');
+                            if(iconEl) iconEl.classList.remove('pin-bounce');
+                        }
+                    });
+                });
+            }, 500);
+
+            // Fix map sizing in hidden tab
+            document.getElementById('map-tab').addEventListener('shown.bs.tab', function () {
+                map.invalidateSize();
+                if (bounds.length > 0) map.fitBounds(bounds, { padding: [30, 30] });
+            });
+
             if(routePoints.length > 1) {
                 L.polyline(routePoints, {
                     color: '#0d6efd',
@@ -266,6 +348,8 @@
             }
         });
     </script>
+
+    </div>
 
     <!-- Deny Modal -->
     <div class="modal fade" id="denyModal" tabindex="-1" aria-labelledby="denyModalLabel" aria-hidden="true">
@@ -294,5 +378,40 @@
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Mobile Sticky Footer Actions -->
+    <div class="fixed-bottom d-xl-none bg-white p-3 shadow-lg border-top" style="z-index: 1050;">
+        @if($booking->status === 'pending_price')
+                    <form action="{{ route('admin.booking.set-price', $booking->id) }}" method="POST" class="mt-3">
+                        @csrf
+                        <label class="form-label small fw-bold text-dark mb-1">Send Custom Quote</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">?</span>
+                            <input type="number" name="quoted_price" class="form-control" placeholder="Enter full trip price" required min="0">
+                            <button class="btn btn-warning fw-medium text-dark px-4" type="submit"><i class="bi bi-send-fill me-1"></i> Send</button>
+                        </div>
+                    </form>
+                @endif
+        <div class="mt-3 d-flex gap-2">
+            @if($booking->status === 'pending_price' || $booking->status === 'pending' || $booking->status === 'pending_downpayment')
+                        <button type="button" class="btn btn-outline-danger fw-medium shadow-sm flex-fill mb-2" data-bs-toggle="modal" data-bs-target="#denyModal">
+                            <i class="bi bi-x-circle me-1"></i> Deny Booking
+                        </button>
+                    @endif
+                    @if($booking->status === 'pending')
+                    <form action="{{ route('admin.booking.update', $booking->id) }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-primary fw-medium shadow-sm flex-fill"><i class="bi bi-check2-circle me-1"></i> Approve Booking</button>
+                    </form>
+                    @elseif($booking->status === 'approved' || $booking->status === 'confirmed')
+                    <form action="{{ route('admin.booking.update.complete', $booking->id) }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-success fw-medium shadow-sm flex-fill"><i class="bi bi-patch-check me-1"></i> Mark Completed</button>
+                    </form>
+                    @endif
+        </div>
+    </div>
+    <div class="d-xl-none" style="height: 160px;"></div>
+    
 </body>
 </html>

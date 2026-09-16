@@ -283,81 +283,78 @@
                 <div id="packagesContainer" class="d-flex flex-column gap-3">
                     @forelse($packages as $package)
                         @php
-                            $category = $package->category ?? 'Standard';
+                            $type = $package->type ?? 'Standard';
 
-                            $badgeStyles = match (strtolower($category)) {
+                            $badgeStyles = match (strtolower($type)) {
                                 'popular' => 'bg-danger text-white',
-                                'best combo' => 'bg-warning text-dark',
+                                'best_combo' => 'bg-warning text-dark',
                                 'trending' => 'bg-primary text-white',
-                                'budget friendly' => 'bg-success text-white',
+                                'budget' => 'bg-success text-white',
                                 default => 'bg-secondary text-white',
                             };
 
-                            $tagIcon = match (strtolower($category)) {
+                            $tagIcon = match (strtolower($type)) {
                                 'popular' => 'bi-fire',
-                                'best combo' => 'bi-star-fill',
+                                'best_combo' => 'bi-star-fill',
                                 'trending' => 'bi-lightning-charge-fill',
-                                'budget friendly' => 'bi-wallet2',
+                                'budget' => 'bi-wallet2',
                                 default => 'bi-bookmark-fill',
                             };
                         @endphp
 
-                        <div class="card package-card-rect package-card shadow-sm bg-white"
-                            data-package-id="{{ $package->id }}" id="package-card-{{ $package->id }}">
-                            <div class="position-relative text-center d-flex align-items-center justify-content-center text-muted"
-                                style="height: 160px; width: 100%; background-color: #f1f3f5;">
-                                <span
-                                    class="badge type-badge shadow-sm {{ $badgeStyles }} text-uppercase tracking-wider px-2.5 py-1.5 rounded-pill d-flex align-items-center gap-1"
-                                    style="font-size: 10px;">
-                                    <i class="bi {{ $tagIcon }}"></i> {{ $category }}
-                                </span>
+                        <div class="card package-card-rect package-card border-0 shadow bg-white" 
+                            data-package-id="{{ $package->id }}" id="package-card-{{ $package->id }}" 
+                            onclick="filterSidebarByPackage({{ $package->id }})"
+                            style="border-radius: 1rem !important; overflow: hidden; transition: transform 0.3s ease; cursor: pointer;">
+                            
+                            <!-- Top Image Container with Purple Gradient fallback and Heart -->
+                            <div class="position-relative d-flex align-items-center justify-content-center text-muted"
+                                style="height: 250px; width: 100%; background: linear-gradient(135deg, #084298, #0d6efd, #6ea8fe);">
+                                
+                                <!-- Floating Heart Icon -->
+                                <button class="btn btn-sm position-absolute top-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center border-0" 
+                                    style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);">
+                                    <i class="bi bi-heart text-white fs-6"></i>
+                                </button>
 
                                 @if (!empty($package->image_path))
-                                    <img src="{{ $package->image_path }}" alt="{{ $package->name }}"
-                                        class="w-100 h-100" style="object-fit: cover;">
+                                    <img src="{{ $package->image_path }}" onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22300%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3Avar(--bs-font-sans-serif)%2C%20sans-serif%3Bfont-size%3A20pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e2e3e5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22144%22%20y%3D%22160%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';" alt="{{ $package->name }}" style="object-fit: cover; width: 100%; height: 100%;">
                                 @else
                                     <i class="bi bi-image fs-1 opacity-25"></i>
                                 @endif
-
-                                <span
-                                    class="position-absolute bottom-0 end-0 m-2 badge bg-dark px-2.5 py-1.5 rounded-pill fs-7 opacity-90 d-flex align-items-center gap-1">
-                                    <i class="bi bi-car-front text-info"></i> 
-                                    Fare by Vehicle
-                                </span>
                             </div>
 
-                            <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-1 fs-6 text-truncate">{{ $package->name }}</h6>
-                                    <p class="text-primary fw-semibold small mb-2 d-flex align-items-center gap-1">
-                                        <i class="bi bi-geo-fill"></i>
-                                        <span class="text-muted fw-normal">Distance-Based Pricing</span>
-                                    </p>
-                                    <p class="text-muted mb-3"
-                                        style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                        {{ $package->description ?? 'No description available for this package.' }}
-                                    </p>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto">
-                                    <span class="text-muted font-monospace small d-flex align-items-center gap-1"
-                                        style="font-size: 11px;">
-                                        <i class="bi bi-geo-alt-fill text-danger"></i> {{ $package->places->count() }}
-                                        Spots
+                            <!-- Bottom Content Container -->
+                            <div class="p-3 d-flex flex-column flex-grow-1 bg-white">
+                                <!-- Title -->
+                                <h5 class="fw-bold text-dark mb-2 mt-1 fs-5 text-truncate" style="letter-spacing: -0.5px;" >{{ $package->name }}</h5>
+                                
+                                <!-- Badges / Tags -->
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <span class="rounded px-2 py-1 {{ $badgeStyles }} d-flex align-items-center gap-1 shadow-sm" style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; border: none !important;">
+                                        <i class="bi {{ $tagIcon }}"></i> {{ strtoupper(str_replace('_', ' ', $type)) }}
                                     </span>
-                                    <div class="d-flex gap-1">
-                                        <button
-                                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-medium d-flex align-items-center gap-1"
-                                            onclick="focusOnPackageRoute({{ $package->id }})"
-                                            style="font-size: 11px;">
-                                            <i class="bi bi-map"></i> View
-                                        </button>
-                                        <a class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-medium d-flex align-items-center gap-1"
-                                            href="/package/{{ $package->id }}"
-                                            style="font-size: 11px;">
-                                            <i class="bi bi-calendar-check"></i> Book Now
-                                        </a>
+                                    <span class="border rounded px-2 py-1 text-dark" style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; border-color: #6c757d !important;">
+                                        {{ $package->places->count() }} STOPS
+                                    </span>
+                                    
+                                </div>
+                                
+                                <!-- Description -->
+                                <p class="text-muted mb-4" style="font-size: 14px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; color: #4b5563 !important;">
+                                    {{ $package->description ?? 'Experience the best of what this package has to offer. A curated journey designed for comfort and flair.' }}
+                                </p>
+
+                                <!-- Footer: Price and Button -->
+                                <div class="d-flex justify-content-between align-items-end mt-auto pt-2">
+                                    <div class="d-flex flex-column">
+                                        <span style="font-size: 10px; font-weight: 800; letter-spacing: 1px; color: #374151;">PRICE</span>
+                                        <span class="fs-4 fw-bold text-dark est-price-display" style="letter-spacing: -1px; line-height: 1;">&#8369; --</span>
                                     </div>
+                                    
+                                    <a href="/package/{{ $package->id }}" class="btn btn-primary rounded-3 px-4 py-2 shadow-sm" style="font-weight: 500; font-size: 14px; letter-spacing: 0.3px;">
+                                        Book Now
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -436,7 +433,7 @@
                                 <div class="row g-0">
                                     <div class="col-4 bg-light d-flex align-items-center justify-content-center">
                                         @if($vehicle->front_image_path || $vehicle->image_path)
-                                            <img src="{{ asset('storage/' . ($vehicle->front_image_path ?? $vehicle->image_path)) }}" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="{{ $vehicle->model }}">
+                                            <img src="{{ asset('storage/' . ($vehicle->front_image_path ?? $vehicle->image_path)) }}" onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22300%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3Avar(--bs-font-sans-serif)%2C%20sans-serif%3Bfont-size%3A20pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e2e3e5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22144%22%20y%3D%22160%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="{{ $vehicle->model }}">
                                         @else
                                             <i class="bi bi-car-front text-muted opacity-25" style="font-size: 3rem;"></i>
                                         @endif
@@ -568,11 +565,11 @@
 
                 currentPackage.spots.forEach((spot) => {
                     const imgUrl = spot.image ? spot.image :
-                        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400';
+                        'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22300%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3Avar(--bs-font-sans-serif)%2C%20sans-serif%3Bfont-size%3A20pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e2e3e5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22144%22%20y%3D%22160%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
 
                     const popupContent = `
                         <div class="card border-0">
-                            <img src="${imgUrl}" class="popup-img" alt="${spot.name}">
+                            <img src="${imgUrl}" onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22300%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3Avar(--bs-font-sans-serif)%2C%20sans-serif%3Bfont-size%3A20pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e2e3e5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22144%22%20y%3D%22160%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';" class="popup-img" alt="${spot.name}">
                             <div class="p-3">
                                 <h6 class="fw-bold mb-1 text-dark">${spot.name}</h6>
                                 <div class="mb-2"><span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i> Est: ${spot.duration}</span></div>
@@ -631,11 +628,11 @@
 
             selectedPackage.spots.forEach((spot, index) => {
                 const imgUrl = spot.image ? spot.image :
-                    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400';
+                    'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22300%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3Avar(--bs-font-sans-serif)%2C%20sans-serif%3Bfont-size%3A20pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e2e3e5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22144%22%20y%3D%22160%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
 
                 const popupContent = `
                     <div class="card border-0">
-                        <img src="${imgUrl}" class="popup-img" alt="${spot.name}">
+                        <img src="${imgUrl}" onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22300%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3Avar(--bs-font-sans-serif)%2C%20sans-serif%3Bfont-size%3A20pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e2e3e5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22144%22%20y%3D%22160%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';" class="popup-img" alt="${spot.name}">
                         <div class="p-3">
                             <h6 class="fw-bold mb-1 text-dark">${spot.name}</h6>
                             <div class="mb-1"><span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i> Est: ${spot.duration}</span></div>
@@ -1041,6 +1038,30 @@
                 openBookingModal(targetPackage);
             });
         @endif
+    
+        const vehiclesList = @json($vehicles);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (vehiclesList.length > 0) {
+                let sortedVehicles = [...vehiclesList].sort((a, b) => parseFloat(a.base_price) - parseFloat(b.base_price));
+                let minVehicle = sortedVehicles[0];
+                let maxVehicle = sortedVehicles[sortedVehicles.length - 1];
+                
+                document.querySelectorAll('.package-card').forEach(card => {
+                    const pkgId = card.getAttribute('data-package-id');
+                    const pkgPrice = (packageData[pkgId] && packageData[pkgId].package_price) ? parseFloat(packageData[pkgId].package_price) : 0;
+                    
+                    let pDisplay = pkgPrice.toLocaleString('en-US', {minimumFractionDigits: 2});
+                    let priceText = `&#8369;${pDisplay}`;
+                    const estDisplay = card.querySelector('.est-price-display');
+                    const distDisplay = card.querySelector('.pkg-distance-display');
+                    
+                    if(estDisplay) {
+                        estDisplay.innerHTML = priceText;
+                    }
+                });
+            }
+        });
     </script>
 </body>
 

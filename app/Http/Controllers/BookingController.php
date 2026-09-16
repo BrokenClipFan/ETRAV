@@ -17,11 +17,15 @@ class BookingController extends Controller
         $packages = Package::with('places')->get();
         $places = Place::all();
         $user = Auth::user();
-        $vehicles = Transport::all();
+        $vehicles = Transport::where('status', 'active')->get();
+        $bookedDates = \App\Models\Booking::whereNotNull('vehicle_id')
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->where('pickup_datetime', '>=', now()->startOfDay())
+            ->get(['vehicle_id', 'pickup_datetime']);
         
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('welcome', compact('packages', 'places', 'user', 'vehicles', 'hasNotification'));
+        return view('welcome', compact('packages', 'places', 'user', 'vehicles', 'hasNotification', 'bookedDates'));
     }
 
     public function turnOffNotification(int $id) 
@@ -52,22 +56,119 @@ class BookingController extends Controller
         $package = Package::with('places')->findOrFail($id);
         $packages = Package::all();
         $vehicles = Transport::where('status', 'active')->get();
+        $bookedDates = \App\Models\Booking::whereNotNull('vehicle_id')
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->where('pickup_datetime', '>=', now()->startOfDay())
+            ->get(['vehicle_id', 'pickup_datetime']);
         $places = Place::all();
         $user = Auth::user();
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification'));
+        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification', 'bookedDates'));
     }
 
     public function viewCustomPackage() {
         $package = null;
         $packages = Package::all();
         $vehicles = Transport::where('status', 'active')->get();
+        $bookedDates = \App\Models\Booking::whereNotNull('vehicle_id')
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->where('pickup_datetime', '>=', now()->startOfDay())
+            ->get(['vehicle_id', 'pickup_datetime']);
         $places = Place::all();
         $user = Auth::user();
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification'));
+        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification', 'bookedDates'));
+    }
+
+    public function editCustomPackage($id) {
+        $editBooking = Booking::with('itinerary.place')->where('user_id', Auth::id())->findOrFail($id);
+        
+        $package = $editBooking->package_id ? Package::with('places')->find($editBooking->package_id) : null;
+        $packages = Package::all();
+        $vehicles = Transport::where('status', 'active')->get();
+        $bookedDates = \App\Models\Booking::whereNotNull('vehicle_id')
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->where('pickup_datetime', '>=', now()->startOfDay())
+            ->where('id', '!=', $id)
+            ->get(['vehicle_id', 'pickup_datetime']);
+        $places = Place::all();
+        $user = Auth::user();
+        $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
+
+        return view('view-package', compact('editBooking', 'package', 'packages', 'vehicles', 'places', 'user', 'hasNotification', 'bookedDates'));
+    }
+
+    public function updateCustomBooking(Request $request, $id) {
+        $booking = Booking::where('user_id', Auth::id())->findOrFail($id);
+        
+        $validated = $request->validate([
+            'package_id'       => 'nullable|exists:packages,id',
+            'vehicle_id'       => 'required|exists:transports,id',
+            'pickup_latitude'  => 'required|numeric|between:-90,90',
+            'pickup_longitude' => 'required|numeric|between:-180,180',
+            'pickup_place_name'=> 'required|string|max:255',
+            'pickup_date'      => 'required|date',
+            'pickup_time'      => 'required', 
+            'number_of_heads'  => 'required|integer|min:1',
+            'total_distance'   => 'required|numeric|min:0',
+            'duration_hrs'     => 'nullable|array',
+            'duration_mins'    => 'nullable|array',
+        ]);
+
+        $pickupDateTime = \Carbon\Carbon::parse($validated['pickup_date'] . ' ' . $validated['pickup_time']);
+        
+        $booking->update([
+            'vehicle_id' => $validated['vehicle_id'],
+            'pickup_datetime' => $pickupDateTime,
+            'latitude' => $validated['pickup_latitude'],
+            'longitude' => $validated['pickup_longitude'],
+            'pickup_place_name' => $validated['pickup_place_name'],
+            'pax' => $validated['number_of_heads'],
+            'distance' => $validated['total_distance'],
+            'is_custom' => true,
+            'status' => 'pending_price',
+            'total_price' => 0,
+            'quoted_price' => null,
+            'deposit_amount' => 0,
+            'notify' => false,
+            'admin_notify' => true
+        ]);
+
+        $booking->itinerary()->delete();
+
+        $spotsOrder = $request->input('spots_order', array_keys($validated['duration_hrs'] ?? []));
+        $customNames = $request->input('custom_spots_name', []);
+        $customLats = $request->input('custom_spots_lat', []);
+        $customLngs = $request->input('custom_spots_lng', []);
+        $customCats = $request->input('custom_spots_category', []);
+
+        foreach ($spotsOrder as $index => $placeId) {
+            $hrs = (int)($validated['duration_hrs'][$placeId] ?? 0);
+            $mins = (int)($validated['duration_mins'][$placeId] ?? 0);
+            $totalMinutes = ($hrs * 60) + $mins;
+
+            if (str_starts_with((string)$placeId, 'custom_')) {
+                $booking->itinerary()->create([
+                    'place_id' => null,
+                    'custom_name' => $customNames[$placeId] ?? 'Custom Stop',
+                    'custom_latitude' => $customLats[$placeId] ?? 0,
+                    'custom_longitude' => $customLngs[$placeId] ?? 0,
+                    'custom_category' => $customCats[$placeId] ?? 'custom',
+                    'stay_duration' => $totalMinutes,
+                    'order' => $index
+                ]);
+            } else {
+                $booking->itinerary()->create([
+                    'place_id' => $placeId,
+                    'stay_duration' => $totalMinutes,
+                    'order' => $index
+                ]);
+            }
+        }
+
+        return redirect()->route('bookings.view')->with('success', 'Booking updated successfully! Waiting for admin to quote a new price.');
     }
 
     public function store(Request $request) {
@@ -100,31 +201,10 @@ class BookingController extends Controller
         $vehicle = \App\Models\Transport::findOrFail($validated['vehicle_id']);
         
         $pax = (int)$validated['number_of_heads'];
+        $totalDistance = (float)$validated['total_distance'];
         $baseVehiclePrice = (float)$vehicle->base_price;
         $intervalRate = (float)$vehicle->interval_rate;
         $pricingDistance = (float)$vehicle->pricing_distance;
-        
-        $totalDistance = (float)$validated['total_distance'];
-        $additionalIntervals = 0;
-        
-        if ($totalDistance > 0 && $pricingDistance > 0) {
-            $distanceMultiplier = ceil($totalDistance / $pricingDistance);
-            if ($distanceMultiplier < 1) $distanceMultiplier = 1;
-            $additionalIntervals = $distanceMultiplier - 1;
-        }
-        
-        $totalPrice = $baseVehiclePrice + ($intervalRate * $additionalIntervals);
-
-        $validated['joiners'] = $request->has('allow_joiners');
-        $capacity = (int)$vehicle->capacity > 0 ? (int)$vehicle->capacity : 1;
-
-        if ($validated['joiners']) {
-            $perHeadPrice = $totalPrice / $capacity;
-        } else {
-            $perHeadPrice = $totalPrice / $pax;
-        }
-        
-        $depositAmount = $totalPrice * 0.25; // 25% deposit
         
         // 4. Check if the itinerary was customized (spots added or removed)
         $isCustomized = false;
@@ -141,6 +221,23 @@ class BookingController extends Controller
                 }
             }
         }
+        
+        // Check if it's a custom package (spots modified or no package selected)
+        $isCustom = $isCustomized || empty($validated['package_id']) || $request->has('custom_spots_name');
+        
+        $packagePrice = $package ? (float)$package->package_price : 0;
+        
+        // Final Price Calculation
+        $totalPrice = $isCustom ? 0 : $packagePrice;
+
+        $validated['joiners'] = $request->has('allow_joiners');
+        $capacity = (int)$vehicle->capacity > 0 ? (int)$vehicle->capacity : 1;
+
+        $perHeadPrice = $totalPrice > 0 ? ($validated['joiners'] ? ($totalPrice / $capacity) : ($totalPrice / $pax)) : 0;
+        
+        // Downpayment logic
+        $depositAmount = $isCustom ? 0 : ($totalPrice * 0.25);
+        $status = $isCustom ? 'pending_price' : 'pending';
         
         $finalPackageId = $isCustomized ? null : $validated['package_id'];
 
@@ -159,7 +256,8 @@ class BookingController extends Controller
             'head_price'      => $perHeadPrice,
             'deposit_amount'  => $depositAmount,
             'joiners'         => $validated['joiners'],
-            'status'          => 'pending', 
+            'status'          => $status,
+            'is_custom'       => $isCustom, 
         ]);
 
         // 5. Structure and attach the stops to booking_places
@@ -221,6 +319,7 @@ class BookingController extends Controller
         // For now, mark the booking as confirmed and record the 25% payment
         $booking->status = 'confirmed';
         $booking->amount_paid = $booking->deposit_amount;
+        $booking->admin_notify = true;
         $booking->save();
 
         return response()->json(['success' => true]);
@@ -234,9 +333,7 @@ class BookingController extends Controller
         $booking->save();
 
         // Release the vehicle if it was tied up
-        if ($booking->vehicle && $booking->vehicle->status === 'unavailable') {
-            $booking->vehicle->update(['status' => 'active']);
-        }
+        
 
         return redirect()->route('bookings.view')->with('success', 'Booking has been successfully cancelled.');
     }
