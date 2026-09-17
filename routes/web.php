@@ -1,8 +1,5 @@
 <?php
-Route::get('/test-render', function() {
-$p = App\Models\Package::find(7);
-return view('view-package', ['package' => $p, 'packages' => App\Models\Package::all(), 'vehicles' => App\Models\Transport::where('status', 'active')->get(), 'places' => App\Models\Place::all(), 'user' => App\Models\User::first(), 'hasNotification' => false, 'bookedDates' => collect()]);
-});
+
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PackageController;
@@ -25,6 +22,7 @@ Route::middleware('auth')->group(function() {
     Route::post('/bookings/{id}/read', [BookingController::class, 'turnOffNotification']);
     Route::get('/booking/{id}/edit', [BookingController::class, 'editCustomPackage'])->name('booking.edit');
     Route::put('/booking/{id}/update', [BookingController::class, 'updateCustomBooking'])->name('booking.update.custom');
+    Route::get('/booking/{id}/payment', [BookingController::class, 'paymentPage'])->name('booking.payment');
     Route::post('/booking/{id}/pay', [BookingController::class, 'payDeposit']);
     Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel'])->name('booking.cancel');
     Route::get('/package/{id}', [BookingController::class, 'viewPackage'])->name('package.book');

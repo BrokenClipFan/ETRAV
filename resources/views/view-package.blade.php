@@ -269,9 +269,9 @@
                     <p class="small mb-0 opacity-75">Complete the form below to finalize your booking.</p>
                 </div>
                 
-                <form action="{{ isset($editBooking) ? route('booking.update.custom', $editBooking->id) : route('booking.store') }}" method="POST" id="bookingForm" class="flex-grow-1 overflow-auto p-3 position-relative">
+                <form action="{{ (isset($editBooking) && !request()->has('rebook')) ? route('booking.update.custom', $editBooking->id) : route('booking.store') }}" method="POST" id="bookingForm" class="flex-grow-1 overflow-auto p-3 position-relative">
                     @csrf
-                    @if(isset($editBooking))
+                    @if(isset($editBooking) && !request()->has('rebook'))
                         @method('PUT')
                     @endif
                     <input type="hidden" name="package_id" id="modalPackageId" value="{{ $package->id ?? old('package_id') }}">
@@ -294,7 +294,7 @@
                         <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
                             <div class="d-flex align-items-center gap-1">
                                 <i class="bi bi-geo-fill text-primary"></i>
-                                <span class="fw-semibold text-dark">Distance-Based Pricing</span>
+                                <span class="fw-semibold text-dark">Custom Package</span>
                             </div>
                         </div>
                     </div>
@@ -311,8 +311,8 @@
                             <div class="input-group shadow-sm @if ($errors->has('pickup_latitude') || $errors->has('pickup_longitude')) is-invalid @endif">
                                 <span class="input-group-text bg-white text-warning"><i class="bi bi-geo-alt-fill"></i></span>
                                 <div class="form-control bg-white text-truncate d-flex align-items-center text-muted small" id="pickupCoordinatesPlaceholder" style="cursor:default;" title="No pickup location selected on map">
-                                    @if (old('pickup_latitude') && old('pickup_longitude'))
-                                        Lat: {{ old('pickup_latitude') }}, Lng: {{ old('pickup_longitude') }}
+                                    @if (old('pickup_latitude', $editBooking->latitude ?? null) && old('pickup_longitude', $editBooking->longitude ?? null))
+                                        {{ old('pickup_place_name', $editBooking->pickup_place_name ?? ('Lat: ' . old('pickup_latitude', $editBooking->latitude) . ', Lng: ' . old('pickup_longitude', $editBooking->longitude))) }}
                                     @else
                                         Choose on the map
                                     @endif
@@ -347,12 +347,12 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label for="pickupDate" class="form-label fw-semibold text-muted small"><i class="bi bi-calendar3 me-1 text-primary"></i> Date</label>
-                            <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('Y-m-d') : '') }}" required min="{{ date('Y-m-d') }}">
+                            <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('Y-m-d') : '') }}" required min="{{ date('Y-m-d') }}" onchange="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()" oninput="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()">
                             @error('pickup_date')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-6">
                             <label for="pickupTime" class="form-label fw-semibold text-muted small"><i class="bi bi-clock me-1 text-primary"></i> Time</label>
-                            <input type="time" name="pickup_time" id="pickupTime" class="form-control form-control-sm text-muted @error('pickup_time') is-invalid @enderror" value="{{ old('pickup_time', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('H:i') : '') }}" required>
+                            <input type="time" name="pickup_time" id="pickupTime" class="form-control form-control-sm text-muted @error('pickup_time') is-invalid @enderror" value="{{ old('pickup_time', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('H:i') : '') }}" required onchange="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()" oninput="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()">
                             @error('pickup_time')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                     </div>
@@ -380,20 +380,17 @@
                         @error('vehicle_id')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                     </div>
 
-                    <!-- Number of Heads -->
-                    <div class="mb-3">
                     <!-- Passengers -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label for="numberHeads" class="form-label fw-semibold text-muted small mb-0"><i class="bi bi-people me-1 text-primary"></i> Number of Heads</label>
+                            <label for="paxInput" class="form-label fw-semibold text-muted small mb-0"><i class="bi bi-people me-1 text-primary"></i> Number of Passengers</label>
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1" style="font-size: 10px;">
                                 <i class="bi bi-people-fill me-1"></i> Max: <span id="modalPaxLimitLabel">0 pax</span>
                             </span>
                         </div>
-                        <label for="paxInput" class="form-label fw-semibold text-muted small"><i class="bi bi-people me-1 text-primary"></i> Number of Passengers</label>
                         <div class="input-group input-group-sm w-50">
                             <button class="btn btn-outline-secondary" type="button" onclick="adjustPax(-1)">-</button>
-                            <input type="number" name="number_of_heads" id="paxInput" class="form-control form-control-sm text-center fw-medium @error('number_of_heads') is-invalid @enderror" value="{{ old('number_of_heads', $editBooking->pax ?? 1) }}" min="1" max="20" required onchange="validatePax()">
+                            <input type="number" name="number_of_heads" id="paxInput" class="form-control form-control-sm text-center fw-medium @error('number_of_heads') is-invalid @enderror" value="{{ old('number_of_heads', $editBooking->pax ?? 1) }}" min="1" max="20" required onchange="validatePax()" oninput="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()">
                             <button class="btn btn-outline-secondary" type="button" onclick="adjustPax(1)">+</button>
                         </div>
                         <div id="paxWarning" class="form-text text-danger d-none fw-medium small mt-1"><i class="bi bi-exclamation-triangle"></i> This exceeds the selected vehicle's capacity.</div>
@@ -403,7 +400,7 @@
                     <!-- JOINER / OPEN GROUP OPTION -->
                     <div class="p-2 border rounded-3 bg-light-subtle mb-3">
                         <div class="form-check form-switch mb-1">
-                            <input class="form-check-input" type="checkbox" name="allow_joiners" id="allowJoinersCheck" value="1" {{ old('allow_joiners') ? 'checked' : '' }} onchange="calculateTotal()">
+                            <input class="form-check-input" type="checkbox" name="allow_joiners" id="allowJoinersCheck" value="1" {{ old('allow_joiners') ? 'checked' : '' }} onchange="calculateTotal(); if(typeof checkIfFormChanged === 'function') checkIfFormChanged();">
                             <label class="form-check-label fw-semibold text-dark small" for="allowJoinersCheck">
                                 <i class="bi bi-people-fill text-primary me-1"></i> Allow Joiners / Open Group
                             </label>
@@ -417,7 +414,12 @@
                         <div class="card-body p-3">
                             <h6 class="fw-bold text-dark small mb-3 border-bottom pb-2"><i class="bi bi-receipt text-success me-1"></i> Pricing & Summary</h6>
                         
-                        <div class="bg-light p-3 rounded-3 mb-4 border shadow-sm" style="font-size: 14px;">
+                        <div id="customQuotationAlert" class="alert alert-warning mb-4 shadow-sm" style="display: none;">
+                            <h6 class="alert-heading fw-bold mb-1"><i class="bi bi-clock-history me-1"></i> Custom Pricing Required</h6>
+                            <p class="mb-0 small text-dark">Because this is a custom route, our admins will review your itinerary and assign a custom price after you submit this booking request.</p>
+                        </div>
+
+                        <div class="bg-light p-3 rounded-3 mb-4 border shadow-sm" style="font-size: 14px;" id="pricingSummaryBox">
                             <div class="d-flex justify-content-between mb-2 text-dark">
                                 <span><i class="bi bi-info-circle me-1 text-primary"></i> Tour Type:</span>
                                 <span class="fw-medium" id="breakdownBase">Private Tour</span>
@@ -427,7 +429,7 @@
                                 <span class="fw-medium" id="breakdownDistance">0.0 km</span>
                             </div>
 
-                            <div class="border-top border-bottom py-2 my-2 bg-white rounded-3 px-2 shadow-sm">
+                            <div class="border-top border-bottom py-2 my-2 bg-white rounded-3 px-2 shadow-sm" id="priceDetailsContainer">
                                 <span class="fw-bold text-dark d-block mb-1" style="font-size: 13px;"><i class="bi bi-tag-fill text-success me-1"></i> Price Details</span>
                                 <div class="d-flex justify-content-between mt-1 text-muted">
                                     <span class="ps-2">Trip Fare:</span>
@@ -443,19 +445,29 @@
                                 <span class="fw-medium" id="breakdownHeads">1 head</span>
                             </div>
                             <div class="d-flex justify-content-between mb-3 text-primary fw-bold bg-primary-subtle p-2 rounded-2" style="font-size: 13px;">
-                                <span><i class="bi bi-person-bounding-box me-1"></i> Cost Per Person:</span>
+                                <span>Per Person:</span>
                                 <span id="breakdownPerPerson">₱0.00 / person</span>
                             </div>
-                            
-                            <div class="d-flex justify-content-between border-top pt-3 fw-bold text-dark fs-5 mb-2">
-                                <span>Grand Total:</span>
-                                <span class="text-success" id="modalTotalPrice">₱0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center bg-warning-subtle p-2 rounded-2 border border-warning-subtle">
-                                <div class="text-dark fw-bold" style="font-size: 13px;">
-                                    <i class="bi bi-cash-coin me-1 fs-6"></i> 25% Deposit (Paid After Approval):
+                        </div>
+
+                        <!-- Grand Total -->
+                        <div id="grandTotalBox">
+                            <div class="d-flex justify-content-between align-items-end mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-dark">Grand Total</h6>
+                                    <small class="text-muted" style="font-size: 11px;">(Inclusive of all fees)</small>
                                 </div>
-                                <span class="fs-5 fw-black text-dark" id="modalDownpaymentPrice">₱0.00</span>
+                                <h4 class="fw-bold text-primary mb-0" id="modalTotalPrice">₱0.00</h4>
+                            </div>
+
+                            <!-- Downpayment Note -->
+                            <div class="bg-warning-subtle border border-warning rounded-3 p-2 mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-warning-emphasis fw-semibold" style="font-size: 12px;">
+                                        <i class="bi bi-info-circle-fill me-1"></i> 25% Deposit Required
+                                    </span>
+                                    <span class="fw-bold text-dark" id="modalDownpaymentPrice" style="font-size: 15px;">₱0.00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -471,15 +483,15 @@
                             </label>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;" onclick="submitBookingRequest()">
-                        <i class="bi bi-calendar-check"></i> {{ isset($editBooking) ? 'Update Booking' : 'Submit Booking Request' }}
+                    <button type="button" id="mainSubmitBtn" class="btn btn-primary w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg sticky-bottom" style="bottom: 10px; font-size: 15px;" onclick="submitBookingRequest()">
+                        <i class="bi bi-calendar-check"></i> <span id="submitBtnText">{{ (isset($editBooking) && !request()->has('rebook')) ? 'Update Booking' : 'Submit Booking Request' }}</span>
                     </button>
                 </form>
             </div>
 
             <!-- RIGHT REGION: MAP VIEW -->
-            <div class="col-12 col-md-8 p-3 bg-light position-relative d-none d-md-block">
-                <div class="map-container">
+            <div class="col-12 col-md-8 p-0 bg-light position-relative d-none d-md-block h-100 d-flex flex-column">
+                <div class="map-container flex-grow-1">
                     <!-- Map Custom Control for adding pins -->
                     <div style="position: absolute; top: 12px; left: 60px; z-index: 1000; max-width: 320px; width: 100%;">
                         <div class="input-group shadow-sm rounded-pill overflow-hidden border bg-white">
@@ -513,19 +525,15 @@
                             your Pickup Point!</span>
                     </div>
 
-                    <div id="map" class="shadow-sm"></div>
-
-                    <div id="spotsPanel" class="spots-overlay-panel card shadow border-0 bg-white d-none">
-                        <div
-                            class="card-header bg-dark text-white py-2 px-3 fw-bold small d-flex justify-content-between align-items-center">
-                            <span class="d-flex align-items-center gap-1"><i
-                                    class="bi bi-pin-angle-fill text-warning"></i> Tour Spots Itinerary</span>
-                            <span class="badge bg-secondary-subtle text-dark border font-monospace"
-                                id="spotCount">0</span>
+                    <!-- Map Loading Overlay -->
+                    <div id="mapLoadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-light d-flex flex-column align-items-center justify-content-center" style="z-index: 1050; transition: opacity 0.4s ease;">
+                        <div class="spinner-border text-primary border-4 shadow-sm mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="list-group list-group-flush" id="spotsListGroup">
-                        </div>
+                        <h6 class="fw-bold text-secondary">Loading map & pins...</h6>
                     </div>
+
+                    <div id="map" class="shadow-sm w-100 h-100"></div>
                 </div>
             </div>
 
@@ -601,6 +609,28 @@
     </div>
 
 
+    <!-- Update Booking Confirmation Modal -->
+    <div class="modal fade" id="updateWarningModal" tabindex="-1" aria-hidden="true" style="z-index: 1070; background: rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-warning-subtle border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i> Update Warning
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-0 text-dark">If you update this booking, an admin will need to review it again to provide a new custom price. You will have to wait for a response.</p>
+                    <p class="mt-2 fw-semibold text-danger">Do you wish to continue?</p>
+                </div>
+                <div class="modal-footer border-top-0 d-flex justify-content-center pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-medium border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmUpdateBtn" class="btn btn-warning rounded-pill px-4 fw-bold" onclick="executeBookingSubmit()" disabled>Yes, Update Booking (5s)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Leaflet Map JS -->
@@ -642,8 +672,8 @@
                                 category: {!! json_encode($spot->place ? ($spot->place->category ?? 'other') : ($spot->custom_category ?? 'custom')) !!},
                                 description: {!! json_encode($spot->place ? ($spot->place->description ?? '') : '') !!},
                                 @php
-                                    $hrs = floor($spot->stay_duration / 60);
-                                    $mins = $spot->stay_duration % 60;
+                                    $hrs = floor($spot->duration_minutes / 60);
+                                    $mins = $spot->duration_minutes % 60;
                                     $dur = $hrs . 'h ' . $mins . 'm';
                                 @endphp
                                 duration: {!! json_encode($dur) !!},
@@ -815,7 +845,7 @@
             const config = getCategoryDetails(categoryKey);
             return L.divIcon({
                 className: 'custom-pin-wrapper',
-                html: `<div class="custom-category-pin" style="background-color: #adb5bd; opacity: 0.8; filter: grayscale(100%);"><i class="bi ${config.icon}"></i></div>`,
+                html: `<div class="custom-category-pin" style="background-color: ${config.bg}; opacity: 0.9;"><i class="bi ${config.icon}"></i></div>`,
                 iconSize: [36, 36],
                 iconAnchor: [18, 36],
                 popupAnchor: [0, -34]
@@ -912,9 +942,6 @@
             const selectedPackage = packageData[packageId];
             if (!selectedPackage) return;
 
-            const listGroup = document.getElementById('spotsListGroup');
-            listGroup.innerHTML = '';
-
             let bounds = [];
             let routeCoordinates = [];
 
@@ -923,6 +950,35 @@
                 routeCoordinates.push([p.lat, p.lng]);
                 bounds.push([p.lat, p.lng]);
             }
+
+            selectedPackage.spots.forEach(spot => {
+                routeCoordinates.push([spot.lat, spot.lng]);
+                bounds.push([spot.lat, spot.lng]);
+            });
+
+            // Draw the route line FIRST so it sits underneath the markers
+            if (routeCoordinates.length > 1) {
+                activeRouteLine = L.polyline(routeCoordinates, {
+                    color: '#0d6efd',
+                    weight: 4,
+                    opacity: 0.75,
+                    dashArray: '8, 8',
+                    lineJoin: 'round'
+                }).addTo(map);
+
+                // Calculate distance
+                totalRouteDistance = 0;
+                for (let i = 0; i < routeCoordinates.length - 1; i++) {
+                    const p1 = L.latLng(routeCoordinates[i][0], routeCoordinates[i][1]);
+                    const p2 = L.latLng(routeCoordinates[i+1][0], routeCoordinates[i+1][1]);
+                    totalRouteDistance += p1.distanceTo(p2);
+                }
+            } else {
+                totalRouteDistance = 0;
+            }
+            
+            // Recalculate price if distance influences it
+            calculateTotal();
 
             selectedPackage.spots.forEach((spot, index) => {
                 const imgUrl = spot.image ? spot.image :
@@ -952,6 +1008,8 @@
                         spot.lat = position.lat;
                         spot.lng = position.lng;
                         
+                        focusOnPackageRoute(packageId);
+                        
                         // Optionally update name based on reverse geocoding
                         fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${position.lat}&lon=${position.lng}`)
                             .then(res => res.json())
@@ -970,15 +1028,15 @@
                                     } else {
                                         let catName = spot.category.charAt(0).toUpperCase() + spot.category.slice(1);
                                         if(spot.category === 'water falls') catName = 'Water Falls';
-                                        if(spot.category === 'custom') catName = 'Custom';
-                                        spot.name = `${catName} Stop (Drag to adjust)`;
+                                        if(spot.category === 'other') catName = 'Custom Location';
+                                        spot.name = catName + " (Custom)";
                                     }
+                                    
+                                    initializeForm();
                                 }
-                                initializeForm();
-                                focusOnPackageRoute("{{ $package->id ?? 0 }}");
-                            }).catch(() => {
-                                initializeForm();
-                                focusOnPackageRoute("{{ $package->id ?? 0 }}");
+                            })
+                            .catch(err => {
+                                console.log("Geocoding failed", err);
                             });
                     });
                 }
@@ -990,25 +1048,6 @@
                 });
 
                 currentMarkers.push(marker);
-                bounds.push([spot.lat, spot.lng]);
-                routeCoordinates.push([spot.lat, spot.lng]);
-
-                const btn = document.createElement('button');
-                btn.className =
-                    "list-group-item list-group-item-action spot-item-btn border-0 py-2 px-3 small bg-white text-muted fw-medium d-flex justify-content-between align-items-center";
-                btn.innerHTML = `
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary-subtle text-primary rounded-circle font-monospace">${index + 1}</span> 
-                        <span>${spot.name}</span>
-                    </div>
-                    <span class="text-muted font-monospace" style="font-size:11px;"><i class="bi bi-clock me-1"></i>${spot.duration}</span>
-                `;
-
-                btn.onclick = function() {
-                    map.setView([spot.lat, spot.lng], 16);
-                    marker.openPopup();
-                };
-                listGroup.appendChild(btn);
             });
             
             // Plot all other places that are not in the current package spots
@@ -1018,7 +1057,7 @@
                     const imgUrl = place.image ? place.image : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400';
                     const popupContent = `
                         <div class="card border-0">
-                            <img src="${imgUrl}" class="popup-img" alt="${place.name}" style="filter: grayscale(80%);">
+                            <img src="${imgUrl}" class="popup-img" alt="${place.name}">
                             <div class="p-3">
                                 <h6 class="fw-bold mb-1 text-dark text-muted">${place.name}</h6>
                                 <div class="mb-1"><span class="badge bg-secondary"><i class="bi bi-clock-history me-1"></i> Est: ${place.duration}</span></div>
@@ -1041,36 +1080,12 @@
                     });
 
                     currentMarkers.push(altMarker);
-                    bounds.push([place.lat, place.lng]);
                 }
             });
 
-            if (routeCoordinates.length > 1) {
-                activeRouteLine = L.polyline(routeCoordinates, {
-                    color: '#0d6efd',
-                    weight: 4,
-                    opacity: 0.75,
-                    dashArray: '8, 8',
-                    lineJoin: 'round'
-                }).addTo(map);
-
-                // Calculate distance
-                totalRouteDistance = 0;
-                for (let i = 0; i < routeCoordinates.length - 1; i++) {
-                    const p1 = L.latLng(routeCoordinates[i][0], routeCoordinates[i][1]);
-                    const p2 = L.latLng(routeCoordinates[i+1][0], routeCoordinates[i+1][1]);
-                    totalRouteDistance += p1.distanceTo(p2);
-                }
-            } else {
-                totalRouteDistance = 0;
-            }
-            
             // Recalculate price if distance influences it
             calculateTotal();
 
-            document.getElementById('spotCount').innerText = selectedPackage.spots.length;
-            document.getElementById('spotsPanel').classList.remove('d-none');
-            
             const resetBtn = document.getElementById('resetFilterBtn');
             if (resetBtn) resetBtn.classList.remove('d-none');
 
@@ -1088,9 +1103,6 @@
             const resetBtn = document.getElementById('resetFilterBtn');
             if (resetBtn) resetBtn.classList.add('d-none');
             
-            const spotsPanel = document.getElementById('spotsPanel');
-            if (spotsPanel) spotsPanel.classList.add('d-none');
-
             loadAllGlobalPins();
         }
 
@@ -1219,6 +1231,7 @@
             const targetedPackageData = packageData["{{ $package->id ?? 0 }}"];
             if (targetedPackageData && targetedPackageData.spots && targetedPackageData.spots.length > 0) {
                 standardSpotsInfo.classList.remove('d-none');
+
                 targetedPackageData.spots.forEach((spot, index) => {
                     const badge = document.createElement('div');
                     badge.className = "d-flex align-items-center bg-light border rounded-3 p-2 small fw-medium draggable-spot-item";
@@ -1259,44 +1272,7 @@
                             </button>
                         </div>
                     `;
-                    // Add hidden input so form submission retains the custom order
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'spots_order[]';
-                    input.value = spot.id;
-                    badge.appendChild(input);
-
-                    const durInput = document.createElement('input');
-                    durInput.type = 'hidden';
-                    durInput.name = `spots_duration[${spot.id}]`;
-                    durInput.value = spot.duration;
-                    badge.appendChild(durInput);
-
-                    if (spot.isCustom) {
-                        const nameInput = document.createElement('input');
-                        nameInput.type = 'hidden';
-                        nameInput.name = `custom_spots_name[${spot.id}]`;
-                        nameInput.value = spot.name;
-                        badge.appendChild(nameInput);
-
-                        const latInput = document.createElement('input');
-                        latInput.type = 'hidden';
-                        latInput.name = `custom_spots_lat[${spot.id}]`;
-                        latInput.value = spot.lat;
-                        badge.appendChild(latInput);
-
-                        const lngInput = document.createElement('input');
-                        lngInput.type = 'hidden';
-                        lngInput.name = `custom_spots_lng[${spot.id}]`;
-                        lngInput.value = spot.lng;
-                        badge.appendChild(lngInput);
-
-                        const catInput = document.createElement('input');
-                        catInput.type = 'hidden';
-                        catInput.name = `custom_spots_category[${spot.id}]`;
-                        catInput.value = spot.category;
-                        badge.appendChild(catInput);
-                    }
+                    badge.dataset.id = spot.id;
 
                     itineraryContainer.appendChild(badge);
                 });
@@ -1320,9 +1296,9 @@
                                 if (numberSpan) {
                                     numberSpan.innerText = (i + 1) + ".";
                                 }
-                                const hiddenInput = item.querySelector('input[name="spots_order[]"]');
-                                if (hiddenInput) {
-                                    newOrderIds.push(hiddenInput.value);
+                                const id = item.dataset.id;
+                                if (id) {
+                                    newOrderIds.push(id);
                                 }
                             });
                             
@@ -1350,6 +1326,12 @@
             }
 
             calculateTotal();
+
+            const vehicleSelect = document.getElementById('vehicleSelect');
+            if (vehicleSelect && vehicleSelect.value) {
+                // Initialize vehicle details display based on current hidden input value
+                selectVehicleFromModal(vehicleSelect.value);
+            }
         }
 
         function updateSpotDuration(spotId, type, value) {
@@ -1461,7 +1443,7 @@
         }
 
         function calculateTotal() {
-            const headsInput = document.getElementById('numberHeads');
+            const headsInput = document.getElementById('paxInput');
             let headsCount = parseInt(headsInput.value) || 1;
             const isJoinerAllowed = document.getElementById('allowJoinersCheck').checked;
             const vehicleSelect = document.getElementById('vehicleSelect');
@@ -1525,6 +1507,31 @@
                 perHeadLabel.innerText = formatCurrency(perHeadRate);
             }
             
+            
+            const isCustomRoute = {{ (!isset($package) || (isset($editBooking) && $editBooking->is_custom)) ? 'true' : 'false' }};
+            const alertBox = document.getElementById('customQuotationAlert');
+            const summaryBox = document.getElementById('pricingSummaryBox');
+            const grandTotalBox = document.getElementById('grandTotalBox');
+
+            if (isCustomRoute) {
+                document.getElementById('breakdownDistance').innerText = (totalRouteDistance / 1000).toFixed(1) + ' km';
+                document.getElementById('totalDistanceInput').value = totalRouteDistance;
+                
+                if (alertBox) alertBox.style.display = 'block';
+                if (summaryBox) summaryBox.style.display = 'none';
+                if (grandTotalBox) grandTotalBox.style.display = 'none';
+                
+                if (typeof checkIfFormChanged === 'function') checkIfFormChanged();
+                return;
+            }
+
+            if (alertBox) alertBox.style.display = 'none';
+            if (summaryBox) summaryBox.style.display = 'block';
+            if (grandTotalBox) grandTotalBox.style.display = 'block';
+            
+            const priceDetailsContainer = document.getElementById('priceDetailsContainer');
+            if (priceDetailsContainer) priceDetailsContainer.style.display = 'block';
+            
             const distanceKm = (totalRouteDistance / 1000).toFixed(1);
             document.getElementById('breakdownDistance').innerText = `${distanceKm} km`;
             document.getElementById('totalDistanceInput').value = totalRouteDistance;
@@ -1547,6 +1554,37 @@
             document.getElementById('breakdownPerPerson').innerText = `${formatCurrency(costPerPerson)} / person`;
             document.getElementById('modalTotalPrice').innerText = formatCurrency(totalToPay);
             document.getElementById('modalDownpaymentPrice').innerText = formatCurrency(downpaymentRequired);
+
+            if (typeof checkIfFormChanged === 'function') checkIfFormChanged();
+        }
+
+        function adjustPax(val) {
+            const input = document.getElementById('paxInput');
+            let current = parseInt(input.value) || 1;
+            let newVal = current + val;
+            
+            const max = parseInt(input.getAttribute('max')) || 20;
+            if (newVal < 1) newVal = 1;
+            if (newVal > max) newVal = max;
+            
+            input.value = newVal;
+            validatePax();
+        }
+
+        function validatePax() {
+            const input = document.getElementById('paxInput');
+            const warning = document.getElementById('paxWarning');
+            let current = parseInt(input.value) || 1;
+            const max = parseInt(input.getAttribute('max')) || 20;
+            
+            if (current > max) {
+                warning.classList.remove('d-none');
+            } else {
+                warning.classList.add('d-none');
+            }
+            if (current < 1) input.value = 1;
+            if (current > max) input.value = max;
+            calculateTotal();
         }
 
         function searchMapPlace() {
@@ -1568,7 +1606,7 @@
                     if (data && data.length > 0) {
                         const lat = parseFloat(data[0].lat);
                         const lon = parseFloat(data[0].lon);
-                        map.flyTo([lat, lon], 14, { animate: true, duration: 1.5 });
+                        map.flyTo([lat, lon], 14, { animate: true, duration: 1.5 }); if (pickupMappingModeActive) { updatePickupPointerPosition(lat, lon); }
                     } else {
                         alert("Place not found. Try being more specific (e.g., adding city or country).");
                     }
@@ -1599,13 +1637,159 @@
                 return;
             }
 
+            // Sync draggable spots to hidden form inputs just before submit
+            const pId = "{{ $package->id ?? 0 }}";
+            const targetedPackageData = packageData[pId];
+            if (targetedPackageData && targetedPackageData.spots) {
+                document.querySelectorAll('.dynamic-itinerary-input').forEach(el => el.remove());
+                targetedPackageData.spots.forEach((spot, index) => {
+                    let h = 1; let m = 0;
+                    const durMatch = String(spot.duration || '').match(/(\d+)h\s*(\d+)m/);
+                    if (durMatch) { h = parseInt(durMatch[1]); m = parseInt(durMatch[2]); }
+                    
+                    const id = spot.id;
+                    form.insertAdjacentHTML('beforeend', `<input type="hidden" name="spots_order[]" value="${id}" class="dynamic-itinerary-input">`);
+                    form.insertAdjacentHTML('beforeend', `<input type="hidden" name="duration_hrs[${id}]" value="${h}" class="dynamic-itinerary-input">`);
+                    form.insertAdjacentHTML('beforeend', `<input type="hidden" name="duration_mins[${id}]" value="${m}" class="dynamic-itinerary-input">`);
+                    
+                    if (spot.isCustom) {
+                        form.insertAdjacentHTML('beforeend', `<input type="hidden" name="custom_spots_name[${id}]" value="${spot.name}" class="dynamic-itinerary-input">`);
+                        form.insertAdjacentHTML('beforeend', `<input type="hidden" name="custom_spots_lat[${id}]" value="${spot.lat}" class="dynamic-itinerary-input">`);
+                        form.insertAdjacentHTML('beforeend', `<input type="hidden" name="custom_spots_lng[${id}]" value="${spot.lng}" class="dynamic-itinerary-input">`);
+                        form.insertAdjacentHTML('beforeend', `<input type="hidden" name="custom_spots_category[${id}]" value="${spot.category}" class="dynamic-itinerary-input">`);
+                    }
+                });
+            }
+
+            @if(isset($editBooking) && !request()->has('rebook'))
+            const isChanged = checkIfFormChanged();
+            if (isChanged) {
+                const updateModalEl = document.getElementById('updateWarningModal');
+                if (updateModalEl) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(updateModalEl);
+                    modal.show();
+
+                    const confirmBtn = document.getElementById('confirmUpdateBtn');
+                    confirmBtn.disabled = true;
+                    let secondsLeft = 5;
+                    confirmBtn.innerText = `Yes, Update Booking (${secondsLeft}s)`;
+                    
+                    if (window.updateCountdownInterval) clearInterval(window.updateCountdownInterval);
+                    
+                    window.updateCountdownInterval = setInterval(() => {
+                        secondsLeft--;
+                        if (secondsLeft > 0) {
+                            confirmBtn.innerText = `Yes, Update Booking (${secondsLeft}s)`;
+                        } else {
+                            clearInterval(window.updateCountdownInterval);
+                            confirmBtn.innerText = 'Yes, Update Booking';
+                            confirmBtn.disabled = false;
+                        }
+                    }, 1000);
+
+                    return;
+                }
+            } else {
+                window.location.href = "{{ url('booking/'.$editBooking->id.'/payment') }}";
+                return;
+            }
+            @endif
+
+            executeBookingSubmit();
+        }
+
+        let initialFormState = null;
+
+        function getFormState() {
+            try {
+                const pId = "{{ $package->id ?? 0 }}";
+                const spotsState = packageData[pId] ? packageData[pId].spots.map(s => ({
+                    id: String(s.id),
+                    lat: s.lat ? parseFloat(s.lat).toFixed(6) : "0.000000",
+                    lng: s.lng ? parseFloat(s.lng).toFixed(6) : "0.000000",
+                    duration: s.duration || "1h 0m",
+                    name: s.name || "",
+                    category: s.category || "custom"
+                })) : [];
+                
+                return JSON.stringify({
+                    spots: spotsState,
+                    lat: parseFloat(document.getElementById('pickupLatitude').value || 0).toFixed(6),
+                    lng: parseFloat(document.getElementById('pickupLongitude').value || 0).toFixed(6),
+                    vehicle: String(document.getElementById('vehicleSelect').value || ""),
+                    pax: String(document.getElementById('paxInput').value || "1"),
+                    date: String(document.getElementById('pickupDate').value || ""),
+                    time: String(document.getElementById('pickupTime').value || ""),
+                    joiners: document.getElementById('allowJoinersCheck').checked
+                });
+            } catch (err) {
+                console.error("Error getting form state:", err);
+                return Date.now().toString(); // Force difference on error
+            }
+        }
+
+        function checkIfFormChanged() {
+            if (!initialFormState) return false;
+            const currentState = getFormState();
+            const isChanged = (initialFormState !== currentState);
+            
+            if (isChanged) {
+                console.log("Form changed!", "\nInitial:", initialFormState, "\nCurrent:", currentState);
+            }
+            
+            const btn = document.getElementById('mainSubmitBtn');
+            const btnText = document.getElementById('submitBtnText');
+            
+            if (btn && btnText) {
+                if (isChanged) {
+                    btnText.innerText = 'Update Booking';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-primary');
+                } else {
+                    btnText.innerText = 'Pay 25% Deposit';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-success');
+                }
+            }
+            return isChanged;
+        }
+
+        function executeBookingSubmit() {
             document.getElementById('bookingForm').submit();
         }
 
         window.onload = function() {
+            const initialPickupLat = document.getElementById('pickupLatitude').value;
+            const initialPickupLng = document.getElementById('pickupLongitude').value;
+            if (initialPickupLat && initialPickupLng) {
+                var pickupIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+                livePickupMarker = L.marker([parseFloat(initialPickupLat), parseFloat(initialPickupLng)], {
+                    icon: pickupIcon,
+                    draggable: true
+                }).addTo(map);
+                livePickupMarker.bindTooltip("Your Selected Pickup Point", {
+                    permanent: true,
+                    direction: 'top',
+                    className: 'custom-pin-label custom-pickup-label',
+                    offset: [0, -50]
+                }).openTooltip();
+                livePickupMarker.on('dragend', function(event) {
+                    var marker = event.target;
+                    var position = marker.getLatLng();
+                    saveSelectedPickupCoordinates(position.lat, position.lng);
+                });
+            }
+
             // Automatically map out the active package route
-            const activePackageId = {{ $package->id ?? 0 }};
-            if (activePackageId) {
+            const activePackageId = "{{ $package->id ?? 0 }}";
+            if (activePackageId !== null && activePackageId !== undefined && activePackageId !== "") {
                 focusOnPackageRoute(activePackageId);
             } else {
                 loadAllGlobalPins();
@@ -1622,6 +1806,21 @@
                     document.body.style.overflow = 'auto';
                 });
             }
+            
+            // Hide the loading overlay after pins are plotted and map is settled
+            setTimeout(() => {
+                const overlay = document.getElementById('mapLoadingOverlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.remove(), 400); // give CSS transition time
+                }
+
+                @if(isset($editBooking) && !request()->has('rebook'))
+                initialFormState = getFormState();
+                checkIfFormChanged();
+                @endif
+
+            }, 600);
         };
 
         @if ($errors->any())

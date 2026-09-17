@@ -119,56 +119,56 @@ class BookingController extends Controller
 
         $pickupDateTime = \Carbon\Carbon::parse($validated['pickup_date'] . ' ' . $validated['pickup_time']);
         
-        $booking->update([
-            'vehicle_id' => $validated['vehicle_id'],
-            'pickup_datetime' => $pickupDateTime,
-            'latitude' => $validated['pickup_latitude'],
-            'longitude' => $validated['pickup_longitude'],
-            'pickup_place_name' => $validated['pickup_place_name'],
-            'pax' => $validated['number_of_heads'],
-            'distance' => $validated['total_distance'],
-            'is_custom' => true,
-            'status' => 'pending_price',
-            'total_price' => 0,
-            'quoted_price' => null,
-            'deposit_amount' => 0,
-            'notify' => false,
-            'admin_notify' => true
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($booking, $validated, $pickupDateTime, $request) {
+            $booking->update([
+                'vehicle_id' => $validated['vehicle_id'],
+                'pickup_datetime' => $pickupDateTime,
+                'latitude' => $validated['pickup_latitude'],
+                'longitude' => $validated['pickup_longitude'],
+                'pickup_place_name' => $validated['pickup_place_name'],
+                'pax' => $validated['number_of_heads'],
+                'distance' => $validated['total_distance'],
+                'is_custom' => true,
+                'status' => 'pending_price',
+                'total_price' => 0,
+                'quoted_price' => null,
+                'deposit_amount' => 0,
+                'notify' => false,
+                'admin_notify' => true
+            ]);
 
-        $booking->itinerary()->delete();
+            $booking->itinerary()->delete();
 
-        $spotsOrder = $request->input('spots_order', array_keys($validated['duration_hrs'] ?? []));
-        $customNames = $request->input('custom_spots_name', []);
-        $customLats = $request->input('custom_spots_lat', []);
-        $customLngs = $request->input('custom_spots_lng', []);
-        $customCats = $request->input('custom_spots_category', []);
+            $spotsOrder = $request->input('spots_order', array_keys($validated['duration_hrs'] ?? []));
+            $customNames = $request->input('custom_spots_name', []);
+            $customLats = $request->input('custom_spots_lat', []);
+            $customLngs = $request->input('custom_spots_lng', []);
+            $customCats = $request->input('custom_spots_category', []);
 
-        foreach ($spotsOrder as $index => $placeId) {
-            $hrs = (int)($validated['duration_hrs'][$placeId] ?? 0);
-            $mins = (int)($validated['duration_mins'][$placeId] ?? 0);
-            $totalMinutes = ($hrs * 60) + $mins;
+            foreach ($spotsOrder as $index => $placeId) {
+                $hrs = (int)($validated['duration_hrs'][$placeId] ?? 0);
+                $mins = (int)($validated['duration_mins'][$placeId] ?? 0);
+                $totalMinutes = ($hrs * 60) + $mins;
 
-            if (str_starts_with((string)$placeId, 'custom_')) {
-                $booking->itinerary()->create([
-                    'place_id' => null,
-                    'custom_name' => $customNames[$placeId] ?? 'Custom Stop',
-                    'custom_latitude' => $customLats[$placeId] ?? 0,
-                    'custom_longitude' => $customLngs[$placeId] ?? 0,
-                    'custom_category' => $customCats[$placeId] ?? 'custom',
-                    'stay_duration' => $totalMinutes,
-                    'order' => $index
-                ]);
-            } else {
-                $booking->itinerary()->create([
-                    'place_id' => $placeId,
-                    'stay_duration' => $totalMinutes,
-                    'order' => $index
-                ]);
+                if (str_starts_with((string)$placeId, 'custom_')) {
+                    $booking->itinerary()->create([
+                        'place_id' => null,
+                        'custom_name' => $customNames[$placeId] ?? 'Custom Stop',
+                        'custom_latitude' => $customLats[$placeId] ?? 0,
+                        'custom_longitude' => $customLngs[$placeId] ?? 0,
+                        'custom_category' => $customCats[$placeId] ?? 'custom',
+                        'duration_minutes' => $totalMinutes
+                    ]);
+                } else {
+                    $booking->itinerary()->create([
+                        'place_id' => $placeId,
+                        'duration_minutes' => $totalMinutes
+                    ]);
+                }
             }
-        }
+        });
 
-        return redirect()->route('bookings.view')->with('success', 'Booking updated successfully! Waiting for admin to quote a new price.');
+        return redirect()->route('bookings.view')->with('success', 'Custom booking updated successfully! Waiting for admin to quote a new price.');
     }
 
     public function store(Request $request) {
@@ -312,17 +312,33 @@ class BookingController extends Controller
         return redirect()->route('bookings.view')->with('success', 'Booking created successfully!');
     }
 
+    public function paymentPage($id) {
+        $booking = Booking::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $user = Auth::user();
+        return view('payment', compact('booking', 'user'));
+    }
+
     public function payDeposit($id, Request $request) {
         $booking = Booking::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         
-        // In a real app, you would save the $request->input('reference') here.
+        $request->validate([
+            'payment_method' => 'required|string',
+            'reference_number' => 'required|string',
+            'proof_of_payment' => 'nullable|image|max:2048'
+        ]);
+
+        if ($request->hasFile('proof_of_payment')) {
+            $path = $request->file('proof_of_payment')->store('payments', 'public');
+            // Can be saved to booking model if it has a column
+        }
+
         // For now, mark the booking as confirmed and record the 25% payment
         $booking->status = 'confirmed';
         $booking->amount_paid = $booking->deposit_amount;
         $booking->admin_notify = true;
         $booking->save();
 
-        return response()->json(['success' => true]);
+        return redirect()->route('bookings.view')->with('success', 'Payment submitted successfully! Your booking is now confirmed.');
     }
 
     public function cancel($id) {

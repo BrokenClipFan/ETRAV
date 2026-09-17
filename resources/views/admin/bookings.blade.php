@@ -135,9 +135,24 @@
                 <p class="text-muted small mb-0">Review custom passenger configurations, pricing calculations, and itinerary allocations.</p>
             </div>
             <div class="bg-white border rounded-3 p-1 shadow-sm d-flex gap-1 flex-wrap">
-                <button class="btn btn-sm btn-primary rounded-2 px-3 filter-btn" data-filter="pending">Pending</button>
-                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="approved">Approved</button>
-                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="confirmed">Paid</button>
+                <button class="btn btn-sm btn-primary rounded-2 px-3 filter-btn position-relative" data-filter="pending">
+                    Pending
+                    @if($bookings->whereIn('status', ['pending', 'pending_price'])->count() > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">New alerts</span></span>
+                    @endif
+                </button>
+                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn position-relative" data-filter="approved">
+                    Approved
+                    @if($bookings->whereIn('status', ['approved', 'pending_downpayment'])->where('admin_notify', true)->count() > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">New alerts</span></span>
+                    @endif
+                </button>
+                <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn position-relative" data-filter="confirmed">
+                    Paid
+                    @if($bookings->where('status', 'confirmed')->where('admin_notify', true)->count() > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">New alerts</span></span>
+                    @endif
+                </button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="completed">Completed</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="denied">Denied</button>
                 <button class="btn btn-sm btn-light text-muted rounded-2 px-3 filter-btn" data-filter="all">All Bookings</button>
@@ -151,7 +166,7 @@
         @endphp
 
         <h5 class="fw-bold mb-3 mt-4 text-warning-emphasis"><i class="bi bi-tools me-2"></i> Custom Route Bookings</h5>
-        <div class="table-responsive custom-table-wrapper" style="max-height: 400px; min-height: 400px; overflow-y: auto;">
+        <div class="table-responsive custom-table-wrapper" style="max-height: 400px; overflow-y: auto;">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
@@ -187,8 +202,13 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-end">
-                                <a href="{{ route('admin.booking.show', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium">
+                                <a href="{{ route('admin.booking.show', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium position-relative">
                                     <i class="bi bi-eye me-1"></i> View Info
+                                    @if($booking->admin_notify)
+                                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                            <span class="visually-hidden">New alerts</span>
+                                        </span>
+                                    @endif
                                 </a>
                             </td>
                         </tr>
@@ -212,7 +232,7 @@
         </div>
 
         <h5 class="fw-bold mb-3 mt-5 text-dark"><i class="bi bi-card-checklist me-2"></i> Standard Bookings</h5>
-        <div class="table-responsive custom-table-wrapper" style="max-height: 400px; min-height: 400px; overflow-y: auto;">
+        <div class="table-responsive custom-table-wrapper" style="max-height: 400px; overflow-y: auto;">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
@@ -248,8 +268,13 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-end">
-                                <a href="{{ route('admin.booking.show', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium">
+                                <a href="{{ route('admin.booking.show', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium position-relative">
                                     <i class="bi bi-eye me-1"></i> View Info
+                                    @if($booking->admin_notify)
+                                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                            <span class="visually-hidden">New alerts</span>
+                                        </span>
+                                    @endif
                                 </a>
                             </td>
                         </tr>

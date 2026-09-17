@@ -302,16 +302,16 @@
                                                     <i class="bi bi-eye"></i> View Details
                                                 </button>
                                                 @if(in_array($booking->status, ['pending', 'pending_price', 'pending_downpayment', 'approved', 'confirmed']))
-                                                    @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
-                                                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="openGcashModal({{ $booking->id }}, '&#8369;{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
-                                                    @endif
-                                                    @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
-                                                        <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
-                                                    @endif
-                                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                                @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
+                                                    <a href="{{ route('booking.payment', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm">Pay 25% Deposit</a>
                                                 @endif
+                                                @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
+                                                    <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
+                                                @endif
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                            @endif
                                                 @if(in_array($booking->status, ['denied', 'cancelled']))
-                                                      <a href="{{ $booking->package_id ? route('package.book', $booking->package_id) : route('custom.package.book') }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm"><i class="bi bi-arrow-repeat me-1"></i>Rebook</a>
+                                                      <a href="{{ route('booking.edit', $booking->id) }}?rebook=1" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm"><i class="bi bi-arrow-repeat me-1"></i>Rebook</a>
                                                   @endif
                                             </div>
                                           </div>
@@ -417,14 +417,14 @@ $badgeClass = match($booking->status) {
                                                     data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                         class="bi bi-eye"></i> View Details</button>
                                                 @if(in_array($booking->status, ['pending', 'pending_price', 'pending_downpayment', 'approved', 'confirmed']))
-                                                    @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
-                                                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="openGcashModal({{ $booking->id }}, '&#8369;{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
-                                                    @endif
-                                                    @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
-                                                        <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
-                                                    @endif
-                                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                                @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
+                                                    <a href="{{ route('booking.payment', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm">Pay 25% Deposit</a>
                                                 @endif
+                                                @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
+                                                    <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
+                                                @endif
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                            @endif
                                                 
                                             </div>
                                           </div>
@@ -506,11 +506,8 @@ $badgeClass = match($booking->status) {
                                                 data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                     class="bi bi-eye"></i> View Details</button>
                                             @if(in_array($booking->status, ['pending', 'pending_price', 'pending_downpayment', 'approved', 'confirmed']))
-                                                @if($booking->status === 'pending_downpayment')
-                                                    <form action="{{ route('booking.pay', $booking->id) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-credit-card me-1"></i> Pay 25% Deposit</button>
-                                                    </form>
+                                                @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
+                                                    <a href="{{ route('booking.payment', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm">Pay 25% Deposit</a>
                                                 @endif
                                                 @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
                                                     <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
@@ -594,11 +591,8 @@ $badgeClass = match($booking->status) {
                                                 data-places="{{ $booking->itinerary->map(fn($i) => ['name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'), 'description' => $i->place ? ($i->place->description ?? 'Included destination.') : 'Custom destination pinned by you.'])->toJson() }}"><i
                                                     class="bi bi-eye"></i> View Details</button>
                                             @if(in_array($booking->status, ['pending', 'pending_price', 'pending_downpayment', 'approved', 'confirmed']))
-                                                @if($booking->status === 'pending_downpayment')
-                                                    <form action="{{ route('booking.pay', $booking->id) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-credit-card me-1"></i> Pay 25% Deposit</button>
-                                                    </form>
+                                                @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
+                                                    <a href="{{ route('booking.payment', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm">Pay 25% Deposit</a>
                                                 @endif
                                                 @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
                                                     <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
@@ -707,16 +701,16 @@ $badgeClass = match($booking->status) {
                                                       <i class="bi bi-eye"></i> View Details
                                                   </button>
                                                 @if(in_array($booking->status, ['pending', 'pending_price', 'pending_downpayment', 'approved', 'confirmed']))
-                                                    @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
-                                                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="openGcashModal({{ $booking->id }}, '&#8369;{{ number_format($booking->deposit_amount, 2) }}')">Pay 25% Deposit</button>
-                                                    @endif
-                                                    @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
-                                                        <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
-                                                    @endif
-                                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                                @if($booking->status === 'pending_downpayment' || $booking->status === 'approved')
+                                                    <a href="{{ route('booking.payment', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-medium shadow-sm">Pay 25% Deposit</a>
                                                 @endif
+                                                @if($booking->is_custom && in_array($booking->status, ['pending_price', 'pending_downpayment']))
+                                                    <a href="{{ route('booking.edit', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-medium shadow-sm"><i class="bi bi-pencil-square me-1"></i> Edit Booking</a>
+                                                @endif
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-medium shadow-sm" onclick="confirmCancel({{ $booking->id }}, '{{ $booking->status }}')">Cancel</button>
+                                            @endif
                                                 @if(in_array($booking->status, ['denied', 'cancelled']))
-                                                      <a href="{{ $booking->package_id ? route('package.book', $booking->package_id) : route('custom.package.book') }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm"><i class="bi bi-arrow-repeat me-1"></i>Rebook</a>
+                                                      <a href="{{ route('booking.edit', $booking->id) }}?rebook=1" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm"><i class="bi bi-arrow-repeat me-1"></i>Rebook</a>
                                                   @endif
                                             </div>
                                           </div>
@@ -781,40 +775,6 @@ $badgeClass = match($booking->status) {
         </div>
     </div>
 
-    <!-- GCASH PAYMENT MODAL -->
-    <div class="modal fade" id="gcashModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-0 pb-0 justify-content-end">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center p-4 pt-0">
-                    <div class="mb-3">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/GCash_logo.svg" alt="GCash" style="height: 35px;">
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">Total Downpayment</h6>
-                    <h3 class="fw-black text-primary mb-3" id="gcashAmount">₱0.00</h3>
-                    
-                    <div class="bg-light p-3 rounded-3 mb-4">
-                        <!-- Simulated Fake QR Code -->
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=FakeGCashPayment" alt="GCash QR" class="img-fluid rounded mb-2 shadow-sm" style="max-width: 150px;">
-                        <span class="small text-muted d-block">Scan to Pay</span>
-                    </div>
-
-                    <div class="text-start mb-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Reference Number <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" id="gcashReferenceInput" placeholder="Enter 13-digit ref no." maxlength="13">
-                    </div>
-
-                    <button type="button" class="btn btn-primary w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2" id="confirmGcashBtn" onclick="confirmGcashPayment()">
-                        <div class="spinner-border spinner-border-sm d-none" role="status" id="gcashSpinner"></div>
-                        <span id="gcashBtnText">Submit Payment</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -831,7 +791,7 @@ $badgeClass = match($booking->status) {
                 messageBox.innerHTML = "Are you sure you want to cancel this booking request?";
             }
             
-            document.getElementById('cancelBookingForm').action = "/bookings/" + bookingId + "/cancel";
+            document.getElementById('cancelBookingForm').action = "/booking/" + bookingId + "/cancel";
             document.getElementById('cancelCsrfToken').value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
             new bootstrap.Modal(document.getElementById('cancelModal')).show();
@@ -981,62 +941,7 @@ $badgeClass = match($booking->status) {
 
         let currentPaymentBookingId = null;
 
-        function openGcashModal(bookingId, amountText) {
-            currentPaymentBookingId = bookingId;
-            document.getElementById('gcashAmount').innerText = amountText;
-            document.getElementById('gcashReferenceInput').value = '';
-            new bootstrap.Modal(document.getElementById('gcashModal')).show();
-        }
 
-        function confirmGcashPayment() {
-            const refInput = document.getElementById('gcashReferenceInput').value.trim();
-            if (refInput.length < 13) {
-                alert('Please enter a valid 13-digit GCash Reference Number.');
-                return;
-            }
-
-            const btn = document.getElementById('confirmGcashBtn');
-            const spinner = document.getElementById('gcashSpinner');
-            const text = document.getElementById('gcashBtnText');
-            
-            btn.disabled = true;
-            spinner.classList.remove('d-none');
-            text.innerText = 'Verifying...';
-            
-            // Simulate 3 seconds network/payment processing delay
-            setTimeout(() => {
-                // Send AJAX request to complete the payment
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                
-                fetch(`/booking/${currentPaymentBookingId}/pay`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({ reference: refInput })
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Payment failed');
-                    
-                    text.innerText = 'Payment Successful!';
-                    spinner.classList.add('d-none');
-                    btn.classList.remove('btn-primary');
-                    btn.classList.add('btn-success');
-                    
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                })
-                .catch(error => {
-                    console.error(error);
-                    alert("Payment verification failed. Please try again.");
-                    btn.disabled = false;
-                    spinner.classList.add('d-none');
-                    text.innerText = 'Submit Payment';
-                });
-            }, 3000); // 3000ms = 3 seconds
-        }
     </script>
 
     <!-- Cancel Booking Modal -->
