@@ -61,10 +61,11 @@ class BookingController extends Controller
             ->where('pickup_datetime', '>=', now()->startOfDay())
             ->get(['vehicle_id', 'pickup_datetime']);
         $places = Place::all();
+        $categories = \App\Models\Category::all();
         $user = Auth::user();
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification', 'bookedDates'));
+        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'categories', 'user', 'hasNotification', 'bookedDates'));
     }
 
     public function viewCustomPackage() {
@@ -76,10 +77,11 @@ class BookingController extends Controller
             ->where('pickup_datetime', '>=', now()->startOfDay())
             ->get(['vehicle_id', 'pickup_datetime']);
         $places = Place::all();
+        $categories = \App\Models\Category::all();
         $user = Auth::user();
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'user', 'hasNotification', 'bookedDates'));
+        return view('view-package', compact('package', 'packages', 'vehicles', 'places', 'categories', 'user', 'hasNotification', 'bookedDates'));
     }
 
     public function editCustomPackage($id) {
@@ -94,10 +96,11 @@ class BookingController extends Controller
             ->where('id', '!=', $id)
             ->get(['vehicle_id', 'pickup_datetime']);
         $places = Place::all();
+        $categories = \App\Models\Category::all();
         $user = Auth::user();
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('view-package', compact('editBooking', 'package', 'packages', 'vehicles', 'places', 'user', 'hasNotification', 'bookedDates'));
+        return view('view-package', compact('editBooking', 'package', 'packages', 'vehicles', 'places', 'categories', 'user', 'hasNotification', 'bookedDates'));
     }
 
     public function updateCustomBooking(Request $request, $id) {

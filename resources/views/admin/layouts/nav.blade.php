@@ -34,6 +34,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.categories.*') || request()->is('admin/categories') ? 'active fw-semibold' : '' }}" href="{{ route('admin.categories.index') }}">
+                        <i class="bi bi-tags-fill me-1"></i> Stop Categories
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('admin.transport.*') || request()->is('admin/transport') ? 'active fw-semibold' : '' }}" href="{{ route('admin.transport.index') }}">
                         <i class="bi bi-car-front-fill me-1"></i> Transport
                     </a>

@@ -262,6 +262,18 @@
             </div>
 
             <div class="col-12 col-md-5 col-lg-5 h-100 position-relative">
+                <!-- Search bar container -->
+                <div class="position-absolute" style="top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 80%; max-width: 400px;">
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border">
+                        <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="mapSearchInput" class="form-control border-0 shadow-none" placeholder="Search places in Cebu..." autocomplete="off">
+                    </div>
+                    <!-- Suggestions Dropdown -->
+                    <div id="mapSearchSuggestions" class="list-group position-absolute w-100 mt-1 shadow-sm d-none" style="max-height: 250px; overflow-y: auto; border-radius: 12px; z-index: 1001;">
+                        <!-- dynamic items -->
+                    </div>
+                </div>
+                
                 <div id="adminFullMap"></div>
             </div>
 
@@ -1044,6 +1056,84 @@
             } else {
                 perHeadInput.value = '';
             }
+        }
+
+        // Map Search Logic
+        let searchTimeout = null;
+        const searchInput = document.getElementById('mapSearchInput');
+        const suggestionsBox = document.getElementById('mapSearchSuggestions');
+
+        if(searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                if(searchTimeout) clearTimeout(searchTimeout);
+                
+                if(query.length < 3) {
+                    suggestionsBox.classList.add('d-none');
+                    suggestionsBox.innerHTML = '';
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    // Viewbox for Cebu bounds: 123.2, 11.4 (NW), 124.2, 9.4 (SE)
+                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&viewbox=123.2,11.4,124.2,9.4&bounded=1`;
+                    
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            suggestionsBox.innerHTML = '';
+                            if(data.length === 0) {
+                                suggestionsBox.classList.add('d-none');
+                                return;
+                            }
+                            
+                            data.forEach(place => {
+                                const btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'list-group-item list-group-item-action py-2 px-3 small text-truncate';
+                                btn.innerHTML = `<i class="bi bi-geo-alt me-2 text-primary"></i> ${place.display_name}`;
+                                btn.onclick = () => {
+                                    adminMap.setView([place.lat, place.lon], 16, {animate: true});
+                                    suggestionsBox.classList.add('d-none');
+                                    searchInput.value = '';
+                                    
+                                    if (temporaryMarker) adminMap.removeLayer(temporaryMarker);
+                                    temporaryMarker = L.marker([place.lat, place.lon], {
+                                        draggable: true
+                                    }).addTo(adminMap);
+                                    
+                                    temporaryMarker.bindTooltip("🖱️ Drag to exact location & release to fill form", {
+                                        permanent: true,
+                                        direction: "top",
+                                        offset: [0, -32]
+                                    }).openTooltip();
+                                    
+                                    temporaryMarker.on('dragend', function(event) {
+                                        const targetMarker = event.target;
+                                        targetMarker.unbindTooltip();
+                                        openRegistrationFormAtMarker(targetMarker);
+                                    });
+                                    
+                                    temporaryMarker.on('click', function(event) {
+                                        const targetMarker = event.target;
+                                        targetMarker.unbindTooltip();
+                                        openRegistrationFormAtMarker(targetMarker);
+                                    });
+                                };
+                                suggestionsBox.appendChild(btn);
+                            });
+                            suggestionsBox.classList.remove('d-none');
+                        })
+                        .catch(err => console.error('Map search error:', err));
+                }, 500); // 500ms debounce
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if(!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.add('d-none');
+                }
+            });
         }
     </script>
     @include('layouts.notification')

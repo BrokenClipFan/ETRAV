@@ -337,6 +337,9 @@
                                     <span class="border rounded px-2 py-1 text-dark" style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; border-color: #6c757d !important;">
                                         {{ $package->places->count() }} STOPS
                                     </span>
+                                    <span class="border rounded px-2 py-1 text-dark" style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px; border-color: #6c757d !important;">
+                                        <i class="bi bi-clock me-1"></i>{{ $package->total_duration }}
+                                    </span>
                                     
                                 </div>
                                 
@@ -444,11 +447,9 @@
                                                 <h6 class="fw-bold text-dark mb-0 vehicle-name-text">{{ $vehicle->brand }} {{ $vehicle->model }}</h6>
                                                 <span class="badge bg-success-subtle text-success rounded-pill" style="font-size: 10px;">{{ $vehicle->status ?? 'Available' }}</span>
                                             </div>
-                                            <p class="text-muted small mb-2 font-monospace" style="font-size: 11px;">Plate: {{ $vehicle->plate_number ?? 'N/A' }}</p>
                                             
                                             <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                                                 <span class="text-secondary small fw-medium vehicle-capacity-text"><i class="bi bi-people-fill me-1"></i>{{ $vehicle->capacity }} Pax</span>
-                                                <span class="text-primary fw-bold">₱{{ number_format($vehicle->base_price ?? 0, 0) }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -921,7 +922,7 @@
             const vehicle = vehiclesData[id];
             if (vehicle) {
                 document.getElementById('selectedVehicleName').innerText = vehicle.name;
-                document.getElementById('selectedVehicleDetails').innerText = `${vehicle.capacity} Pax | ₱${vehicle.base_price}`;
+                document.getElementById('selectedVehicleDetails').innerText = `${vehicle.capacity} Pax`;
                 
                 // Try to find the image from the clicked row
                 const row = Array.from(document.querySelectorAll('.vehicle-item-row')).find(r => r.getAttribute('onclick').includes(`(${id})`));

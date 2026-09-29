@@ -255,12 +255,23 @@
 
             // 2. Itinerary Locations
             @php
-                $itineraryData = $booking->itinerary->map(function($i) {
+                $categoriesMap = \App\Models\Category::pluck('icon_path', 'name')->toArray();
+                
+                $itineraryData = $booking->itinerary->map(function($i) use ($categoriesMap) {
+                    $catName = $i->place ? ($i->place->category ?? 'default') : ($i->custom_category ?? 'custom');
+                    $icon = '';
+                    foreach($categoriesMap as $name => $path) {
+                        if(strtolower($name) === strtolower($catName)) {
+                            $icon = $path ? asset('storage/' . $path) : '';
+                            break;
+                        }
+                    }
                     return [
                         'lat' => $i->place ? $i->place->latitude : $i->custom_latitude,
                         'lng' => $i->place ? $i->place->longitude : $i->custom_longitude,
                         'name' => $i->place ? $i->place->name : ($i->custom_name ?? 'Custom Stop'),
-                        'category' => $i->place ? 'default' : ($i->custom_category ?? 'custom')
+                        'category' => $catName,
+                        'icon' => $icon
                     ];
                 });
             @endphp
@@ -283,14 +294,22 @@
 
             itinerary.forEach((spot, index) => {
                 if(spot.lat && spot.lng) {
-                    const style = categoryColors[spot.category] || categoryColors['default'];
-                    
-                    const icon = L.divIcon({
-                        html: `<div class="custom-category-pin" style="background-color: ${style.color}; color: white;">${index + 1}</div>`,
-                        className: 'custom-pin-container',
-                        iconSize: [36, 36],
-                        iconAnchor: [18, 18],
-                    });
+                    let icon;
+                    if (spot.icon) {
+                        icon = L.icon({
+                            iconUrl: spot.icon,
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 36]
+                        });
+                    } else {
+                        const style = categoryColors[spot.category] || categoryColors['default'];
+                        icon = L.divIcon({
+                            html: `<div class="custom-category-pin" style="background-color: ${style.color}; color: white;">${index + 1}</div>`,
+                            className: 'custom-pin-container',
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 18],
+                        });
+                    }
 
                     const marker = L.marker([spot.lat, spot.lng], {icon: icon})
                      .addTo(map)

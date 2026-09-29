@@ -294,7 +294,13 @@
                         <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
                             <div class="d-flex align-items-center gap-1">
                                 <i class="bi bi-geo-fill text-primary"></i>
-                                <span class="fw-semibold text-dark">Custom Package</span>
+                                <span class="fw-semibold text-dark" id="packageTypeLabel">
+                                    @if(isset($editBooking) && $editBooking->is_custom)
+                                        Custom Package
+                                    @else
+                                        Normal Package - ₱{{ number_format($package->package_price ?? 0, 2) }}
+                                    @endif
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -507,12 +513,21 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 13px; min-width: 160px; z-index: 1001;">
                             <li><h6 class="dropdown-header">Custom Itinerary</h6></li>
-                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); addCustomStop('swimming')"><i class="bi bi-water text-info me-2"></i>Swimming</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); addCustomStop('mountain')"><i class="bi bi-tree-fill text-success me-2"></i>Mountain</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); addCustomStop('restaurant')"><i class="bi bi-cup-hot-fill text-warning me-2"></i>Restaurant</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); addCustomStop('terminal')"><i class="bi bi-bus-front-fill me-2" style="color: #6f42c1;"></i>Terminal</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); addCustomStop('water falls')"><i class="bi bi-tsunami text-primary me-2"></i>Water Falls</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            @foreach($categories ?? [] as $category)
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" href="#" onclick="event.preventDefault(); addCustomStop('{{ $category->name }}', '{{ $category->icon_path ? asset('storage/' . $category->icon_path) : '' }}')">
+                                        @if($category->icon_path)
+                                            <img src="{{ asset('storage/' . $category->icon_path) }}" alt="{{ $category->name }}" class="me-2" style="width: 16px; height: 16px; object-fit: contain;">
+                                        @else
+                                            <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                                        @endif
+                                        {{ $category->name }}
+                                    </a>
+                                </li>
+                            @endforeach
+                            @if(count($categories ?? []) > 0)
+                                <li><hr class="dropdown-divider"></li>
+                            @endif
                             <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); addCustomStop('custom')"><i class="bi bi-pin-map-fill text-danger me-2"></i>Other</a></li>
                         </ul>
                     </div>
@@ -587,11 +602,9 @@
                                                 <h6 class="fw-bold text-dark mb-0 vehicle-name-text">{{ $vehicle->brand }} {{ $vehicle->model }}</h6>
                                                 <span class="badge bg-success-subtle text-success rounded-pill" style="font-size: 10px;">{{ $vehicle->status ?? 'Available' }}</span>
                                             </div>
-                                            <p class="text-muted small mb-2 font-monospace" style="font-size: 11px;">Plate: {{ $vehicle->plate_number ?? 'N/A' }}</p>
                                             
                                             <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                                                 <span class="text-secondary small fw-medium vehicle-capacity-text"><i class="bi bi-people-fill me-1"></i>{{ $vehicle->capacity }} Pax</span>
-                                                <span class="text-primary fw-bold">₱{{ number_format($vehicle->base_price ?? 0, 0) }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -626,6 +639,25 @@
                 <div class="modal-footer border-top-0 d-flex justify-content-center pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-medium border" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" id="confirmUpdateBtn" class="btn btn-warning rounded-pill px-4 fw-bold" onclick="executeBookingSubmit()" disabled>Yes, Update Booking (5s)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Package Warning Modal -->
+    <div class="modal fade" id="customPackageWarningModal" tabindex="-1" aria-hidden="true" style="z-index: 1070; background: rgba(0,0,0,0.6);" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-warning-subtle border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-warning fs-5"></i> Custom Package Notice
+                    </h5>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-0 text-dark">By adding custom stops or modifying durations, this package becomes a <strong>Custom Package</strong>. Your itinerary will need to be reviewed by an admin to determine a custom price.</p>
+                </div>
+                <div class="modal-footer border-top-0 d-flex justify-content-center pb-4">
+                    <button type="button" id="customWarningUnderstandBtn" class="btn btn-warning rounded-pill px-4 fw-bold" data-bs-dismiss="modal" disabled>I Understand (5s)</button>
                 </div>
             </div>
         </div>
@@ -761,7 +793,7 @@
                         </div>
                     `;
 
-                    const customIcon = createCategoryPinIcon(spot.category);
+                    const customIcon = createCategoryPinIcon(spot);
                     var marker = L.marker([spot.lat, spot.lng], {icon: customIcon}).addTo(map).bindPopup(popupContent);
                     marker.bindTooltip(spot.name, {
                         permanent: true,
@@ -830,8 +862,16 @@
             };
         }
 
-        function createCategoryPinIcon(categoryKey) {
-            const config = getCategoryDetails(categoryKey);
+        function createCategoryPinIcon(spot) {
+            if (spot && spot.category_icon) {
+                return L.icon({
+                    iconUrl: spot.category_icon,
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36],
+                    popupAnchor: [0, -34]
+                });
+            }
+            const config = getCategoryDetails(spot ? spot.category : '');
             return L.divIcon({
                 className: 'custom-pin-wrapper',
                 html: `<div class="custom-category-pin" style="background-color: ${config.bg};"><i class="bi ${config.icon}"></i></div>`,
@@ -841,8 +881,17 @@
             });
         }
 
-        function createGrayCategoryPinIcon(categoryKey) {
-            const config = getCategoryDetails(categoryKey);
+        function createGrayCategoryPinIcon(spot) {
+            if (spot && spot.category_icon) {
+                return L.icon({
+                    iconUrl: spot.category_icon,
+                    className: 'opacity-75',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36],
+                    popupAnchor: [0, -34]
+                });
+            }
+            const config = getCategoryDetails(spot ? spot.category : '');
             return L.divIcon({
                 className: 'custom-pin-wrapper',
                 html: `<div class="custom-category-pin" style="background-color: ${config.bg}; opacity: 0.9;"><i class="bi ${config.icon}"></i></div>`,
@@ -866,11 +915,13 @@
             const place = allPlacesData[placeId];
             if (place && packageData[activePackageId]) {
                 // Add to the package data
-                packageData[activePackageId].spots.push(place);
+                const newPlace = {...place, isCustom: true};
+                packageData[activePackageId].spots.push(newPlace);
                 
                 // Redraw map and form
                 initializeForm();
                 focusOnPackageRoute(activePackageId);
+                if(typeof updatePackageTypeLabel === 'function') updatePackageTypeLabel();
             }
         }
         
@@ -883,6 +934,7 @@
                 // Redraw map and form
                 initializeForm();
                 focusOnPackageRoute(activePackageId);
+                if(typeof updatePackageTypeLabel === 'function') updatePackageTypeLabel();
             }
         }
         
@@ -901,7 +953,7 @@
                 }
             }
         }
-        function addCustomStop(category = 'custom') {
+        function addCustomStop(category = 'custom', iconUrl = '') {
             const activePackageId = "{{ $package->id ?? 0 }}";
             if (!packageData[activePackageId]) return;
             
@@ -915,6 +967,7 @@
                 id: customId,
                 name: `${catName} Stop (Drag to adjust)`,
                 category: category,
+                category_icon: iconUrl,
                 description: 'Drag this pin to set your custom location.',
                 duration: '1h 0m',
                 image: '',
@@ -927,6 +980,7 @@
             
             initializeForm();
             focusOnPackageRoute(activePackageId);
+            if(typeof updatePackageTypeLabel === 'function') updatePackageTypeLabel();
             
             // Show alert instruction once
             const toast = document.createElement('div');
@@ -996,7 +1050,7 @@
                     </div>
                 `;
 
-                const customIcon = createCategoryPinIcon(spot.category);
+                const customIcon = createCategoryPinIcon(spot);
                 var marker = L.marker([spot.lat, spot.lng], {
                     icon: customIcon,
                     draggable: spot.isCustom ? true : false
@@ -1069,7 +1123,7 @@
                         </div>
                     `;
 
-                    const grayIcon = createGrayCategoryPinIcon(place.category);
+                    const grayIcon = createGrayCategoryPinIcon(place);
 
                     var altMarker = L.marker([place.lat, place.lng], {icon: grayIcon}).addTo(map).bindPopup(popupContent);
                     altMarker.bindTooltip(`${place.name}`, {
@@ -1334,6 +1388,55 @@
             }
         }
 
+        function showCustomWarningModal() {
+            const modalEl = document.getElementById('customPackageWarningModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+
+                const confirmBtn = document.getElementById('customWarningUnderstandBtn');
+                confirmBtn.disabled = true;
+                let secondsLeft = 5;
+                confirmBtn.innerText = `I Understand (${secondsLeft}s)`;
+                
+                if (window.customWarningInterval) clearInterval(window.customWarningInterval);
+                
+                window.customWarningInterval = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft > 0) {
+                        confirmBtn.innerText = `I Understand (${secondsLeft}s)`;
+                    } else {
+                        clearInterval(window.customWarningInterval);
+                        confirmBtn.innerText = 'I Understand';
+                        confirmBtn.disabled = false;
+                    }
+                }, 1000);
+            }
+        }
+
+        function updatePackageTypeLabel() {
+            const activePackageId = "{{ $package->id ?? 0 }}";
+            const targetedPackageData = packageData[activePackageId];
+            if (!targetedPackageData) return;
+            const label = document.getElementById('packageTypeLabel');
+            if(!label) return;
+
+            const isCustom = targetedPackageData.spots.some(s => s.isCustom || s.isDurationEdited);
+            
+            if (isCustom) {
+                label.innerText = 'Custom Package';
+                
+                // Show warning if it's the first time it becomes custom dynamically.
+                const initialIsCustom = {{ (!isset($package) || (isset($editBooking) && $editBooking->is_custom)) ? 'true' : 'false' }};
+                if (!window.hasSeenCustomWarning && !initialIsCustom) {
+                    window.hasSeenCustomWarning = true;
+                    showCustomWarningModal();
+                }
+            } else {
+                label.innerText = 'Normal Package - ₱' + Number(targetedPackageData.package_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+
         function updateSpotDuration(spotId, type, value) {
             const activePackageId = "{{ $package->id ?? 0 }}";
             if (!packageData[activePackageId]) return;
@@ -1351,7 +1454,9 @@
             if (type === 'minutes') m = parseInt(value) || 0;
 
             spot.duration = `${h}h ${m}m`;
+            spot.isDurationEdited = true;
             focusOnPackageRoute(activePackageId);
+            if(typeof updatePackageTypeLabel === 'function') updatePackageTypeLabel();
         }
 
         function openVehicleModal() {
@@ -1411,7 +1516,7 @@
             const vehicle = vehiclesData[id];
             if (vehicle) {
                 document.getElementById('selectedVehicleName').innerText = vehicle.name;
-                document.getElementById('selectedVehicleDetails').innerText = `${vehicle.capacity} Pax | ₱${vehicle.base_price}`;
+                document.getElementById('selectedVehicleDetails').innerText = `${vehicle.capacity} Pax`;
                 
                 // Try to find the image from the clicked row
                 const row = Array.from(document.querySelectorAll('.vehicle-item-row')).find(r => r.getAttribute('onclick').includes(`(${id})`));
@@ -1556,6 +1661,7 @@
             document.getElementById('modalDownpaymentPrice').innerText = formatCurrency(downpaymentRequired);
 
             if (typeof checkIfFormChanged === 'function') checkIfFormChanged();
+            if (typeof updatePackageTypeLabel === 'function') updatePackageTypeLabel();
         }
 
         function adjustPax(val) {

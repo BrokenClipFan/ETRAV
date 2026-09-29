@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\PlaceController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\TransportController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Auth\FacebookAuthController;
 
@@ -52,6 +53,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/calendar/events', [AdminBookingController::class, 'calendarEvents'])->name('calendar.events');
 
     Route::resource('/transport', TransportController::class);
+    Route::resource('/categories', CategoryController::class)->except(['create', 'show', 'edit']);
 });
 
 Route::middleware('auth')->group(function () {

@@ -1,0 +1,29 @@
+flowchart TD
+    Start([User / Customer])
+    Auth{Authenticated?}
+    Login[Login via Facebook or Email]
+    Home[/Home Page & Dashboard/]
+    DB[(ETRAV Database)]
+    Start --> Auth
+    Auth -->|No| Login
+    Login --> Auth
+    Auth -->|Yes| Home
+    Home --> Nav{Select Action}
+    Nav -->|View Packages| BrowsePack[/Browse Standard Packages/]
+    BrowsePack --> ViewPack[View Package Details]
+    ViewPack --> BookStand[Submit Booking]
+    Nav -->|Custom Package| CustPack[/Custom Package Builder/]
+    CustPack --> BookCust[Submit Custom Booking]
+    BookStand --> DB
+    BookCust --> DB
+    Nav -->|My Bookings| MyBooks[/Manage My Bookings/]
+    MyBooks --> ManageB{Select Booking Action}
+    ManageB -->|Edit| EditBook[Edit Custom Package Details]
+    ManageB -->|Cancel| CancelBook[Cancel Booking]
+    ManageB -->|Pay| PayBook[Make Deposit / Payment]
+    EditBook --> DB
+    CancelBook --> DB
+    PayBook --> DB
+    Nav -->|Profile| Prof[/Profile Settings/]
+    Prof --> EditProf[Update / Delete Profile]
+    EditProf --> DB

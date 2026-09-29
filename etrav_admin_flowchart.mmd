@@ -1,0 +1,40 @@
+flowchart TD
+    Start([Admin Dashboard])
+    SelectModule{Select Module}
+    DB[(ETRAV Database)]
+    B[/Bookings Management/]
+    P[/Packages Management/]
+    PL[/Places & Spots/]
+    T[/Transport Management/]
+    C[/Calendar & Scheduling/]
+    S[/Statistics & Reports/]
+    Start --> SelectModule
+    SelectModule --> B
+    SelectModule --> P
+    SelectModule --> PL
+    SelectModule --> T
+    SelectModule --> C
+    SelectModule --> S
+    B --> ViewB[View All Bookings]
+    ViewB --> ManageB{Manage Booking}
+    ManageB -->|Set Price| SetPrice[Set Custom Price]
+    ManageB -->|Update Status| UpStatus[Update / Mark Complete]
+    ManageB -->|Deny| DenyB[Deny Booking]
+    SetPrice --> DB
+    UpStatus --> DB
+    DenyB --> DB
+    P --> ViewP[View Packages]
+    ViewP --> ManageP[Add / Edit / Delete Package]
+    ManageP --> DB
+    PL --> ViewPL[View Tourist Spots]
+    ViewPL --> ManagePL[Add / Edit / Delete Spot]
+    ManagePL --> DB
+    T --> ViewT[View Transport Options]
+    ViewT --> ManageT[Add / Edit / Delete Transport]
+    ManageT --> DB
+    C --> ViewCal[View Bookings Calendar]
+    ViewCal --> FetchEvents[Fetch Events Data]
+    FetchEvents --> DB
+    S --> ViewStats[View Revenue & Stats]
+    ViewStats --> FetchStats[Fetch Statistics Data]
+    FetchStats --> DB
