@@ -353,7 +353,7 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label for="pickupDate" class="form-label fw-semibold text-muted small"><i class="bi bi-calendar3 me-1 text-primary"></i> Date</label>
-                            <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('Y-m-d') : '') }}" required min="{{ date('Y-m-d') }}" onchange="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()" oninput="if(typeof checkIfFormChanged === 'function') checkIfFormChanged()">
+                            <input type="date" name="pickup_date" id="pickupDate" class="form-control form-control-sm text-muted @error('pickup_date') is-invalid @enderror" value="{{ old('pickup_date', isset($editBooking) ? \Carbon\Carbon::parse($editBooking->pickup_datetime)->format('Y-m-d') : '') }}" required min="{{ date('Y-m-d') }}" onchange="validateSelectedVehicle(); if(typeof checkIfFormChanged === 'function') checkIfFormChanged()" oninput="validateSelectedVehicle(); if(typeof checkIfFormChanged === 'function') checkIfFormChanged()">
                             @error('pickup_date')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-6">
@@ -403,15 +403,7 @@
                         @error('number_of_heads')<div class="text-danger small mt-1 ms-1">{{ $message }}</div>@enderror
                     </div>
 
-                    <!-- JOINER / OPEN GROUP OPTION -->
-                    <div class="p-2 border rounded-3 bg-light-subtle mb-3">
-                        <div class="form-check form-switch mb-1">
-                            <input class="form-check-input" type="checkbox" name="allow_joiners" id="allowJoinersCheck" value="1" {{ old('allow_joiners') ? 'checked' : '' }} onchange="calculateTotal(); if(typeof checkIfFormChanged === 'function') checkIfFormChanged();">
-                            <label class="form-check-label fw-semibold text-dark small" for="allowJoinersCheck">
-                                <i class="bi bi-people-fill text-primary me-1"></i> Allow Joiners / Open Group
-                            </label>
-                        </div>
-                    </div>
+                    <!-- JOINER OPTION REMOVED -->
 
                         </div>
                     </div>
@@ -587,7 +579,7 @@
                     
                     <div id="vehicleListContainer" class="d-flex flex-column gap-3">
                         @foreach($vehicles as $vehicle)
-                            <div class="card border rounded-4 vehicle-item-row overflow-hidden" style="cursor: pointer; transition: 0.2s;" onclick="selectVehicleFromModal({{ $vehicle->id }})">
+                            <div class="card border rounded-4 vehicle-item-row overflow-hidden" data-vehicle-id="{{ $vehicle->id }}" style="cursor: pointer; transition: 0.2s;" onclick="selectVehicleFromModal({{ $vehicle->id }})">
                                 <div class="row g-0">
                                     <div class="col-4 bg-light d-flex align-items-center justify-content-center">
                                         @if($vehicle->front_image_path || $vehicle->image_path)
@@ -671,6 +663,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
+        const bookedDatesRaw = @json($bookedDates ?? []);
+        const bookedVehicles = bookedDatesRaw.map(b => {
+            const dateObj = new Date(b.pickup_datetime);
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return { vehicle_id: b.vehicle_id, date: `${year}-${month}-${day}` };
+        });
+
         var map = L.map('map').setView([10.3157, 123.8854], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
@@ -1462,6 +1463,39 @@
         function openVehicleModal() {
             // Keep bookingModal open in the background, just show vehicleSelectionModal over it
             const vehicleModalEl = document.getElementById('vehicleSelectionModal');
+            const selectedDate = document.getElementById('pickupDate').value;
+
+            // Re-enable all rows first
+            document.querySelectorAll('.vehicle-item-row').forEach(row => {
+                row.classList.remove('opacity-50', 'bg-light');
+                row.style.pointerEvents = 'auto';
+                const statusBadge = row.querySelector('.badge');
+                if (statusBadge) {
+                    statusBadge.innerText = 'Available';
+                    statusBadge.className = 'badge bg-success-subtle text-success rounded-pill';
+                }
+            });
+
+            if (selectedDate) {
+                // Check if any vehicles are booked on this date
+                const bookedVehicleIds = bookedVehicles
+                    .filter(b => b.date === selectedDate)
+                    .map(b => b.vehicle_id);
+
+                document.querySelectorAll('.vehicle-item-row').forEach(row => {
+                    const rowVehicleId = parseInt(row.getAttribute('data-vehicle-id'));
+                    if (bookedVehicleIds.includes(rowVehicleId)) {
+                        row.classList.add('opacity-50', 'bg-light');
+                        row.style.pointerEvents = 'none';
+                        const statusBadge = row.querySelector('.badge');
+                        if (statusBadge) {
+                            statusBadge.innerText = 'Rented';
+                            statusBadge.className = 'badge bg-secondary-subtle text-secondary rounded-pill';
+                        }
+                    }
+                });
+            }
+
             const modal = bootstrap.Modal.getOrCreateInstance(vehicleModalEl);
             modal.show();
         }
@@ -1511,11 +1545,18 @@
         }
 
         function selectVehicleFromModal(id) {
+            const selectedDate = document.getElementById('pickupDate').value;
+            if (selectedDate) {
+                const isBooked = bookedVehicles.some(b => b.date === selectedDate && b.vehicle_id === parseInt(id));
+                if (isBooked) return; // Do not allow selecting if booked
+            }
+
             document.getElementById('vehicleSelect').value = id;
             
             const vehicle = vehiclesData[id];
             if (vehicle) {
                 document.getElementById('selectedVehicleName').innerText = vehicle.name;
+                document.getElementById('selectedVehicleName').classList.remove('text-danger');
                 document.getElementById('selectedVehicleDetails').innerText = `${vehicle.capacity} Pax`;
                 
                 // Try to find the image from the clicked row
@@ -1550,7 +1591,7 @@
         function calculateTotal() {
             const headsInput = document.getElementById('paxInput');
             let headsCount = parseInt(headsInput.value) || 1;
-            const isJoinerAllowed = document.getElementById('allowJoinersCheck').checked;
+            const isJoinerAllowed = false;
             const vehicleSelect = document.getElementById('vehicleSelect');
             
             let vehiclePrice = 0;
@@ -1675,6 +1716,33 @@
             
             input.value = newVal;
             validatePax();
+        }
+
+        function validateSelectedVehicle() {
+            const selectedDate = document.getElementById('pickupDate').value;
+            const vehicleSelect = document.getElementById('vehicleSelect');
+            const selectedVehicleId = parseInt(vehicleSelect.value);
+
+            if (selectedDate && selectedVehicleId) {
+                const isBooked = bookedVehicles.some(b => b.date === selectedDate && b.vehicle_id === selectedVehicleId);
+                
+                if (isBooked) {
+                    // Reset selection
+                    vehicleSelect.value = '';
+                    
+                    const imgContainer = document.getElementById('selectedVehicleImg');
+                    imgContainer.innerHTML = '<i class="bi bi-car-front fs-5"></i>';
+                    imgContainer.classList.remove('p-0');
+                    
+                    document.getElementById('selectedVehicleName').innerText = 'Vehicle Unavailable';
+                    document.getElementById('selectedVehicleDetails').innerText = 'Already rented on this date. Please choose another.';
+                    document.getElementById('selectedVehicleName').classList.add('text-danger');
+                    
+                    calculateTotal();
+                } else {
+                    document.getElementById('selectedVehicleName').classList.remove('text-danger');
+                }
+            }
         }
 
         function validatePax() {
@@ -1826,7 +1894,7 @@
                     pax: String(document.getElementById('paxInput').value || "1"),
                     date: String(document.getElementById('pickupDate').value || ""),
                     time: String(document.getElementById('pickupTime').value || ""),
-                    joiners: document.getElementById('allowJoinersCheck').checked
+                    joiners: false
                 });
             } catch (err) {
                 console.error("Error getting form state:", err);
