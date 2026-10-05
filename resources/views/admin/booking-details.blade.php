@@ -63,7 +63,7 @@
             <div>
                 <a href="{{ route('admin.bookings') }}" class="btn btn-sm btn-light border text-muted mb-2 no-print"><i class="bi bi-arrow-left me-1"></i>Back to Bookings</a>
                 <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2 flex-wrap">
-            Booking #BKG-{{ $booking->id }}
+            {{ $booking->package->name ?? 'Custom Itinerary' }}
             
                             @if($booking->status === 'pending')
                                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Pending Approval</span>
@@ -82,7 +82,7 @@
                             @endif
                         
         </h4>
-                <p class="text-muted small mb-0">{{ $booking->package->name ?? 'Custom Itinerary' }}</p>
+                <p class="text-muted small mb-0">Booking #BKG-{{ $booking->id }}</p>
             </div>
             <div class="no-print d-none d-xl-flex gap-2">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4 fw-medium" onclick="window.print()">
@@ -134,25 +134,13 @@
                     </div>
 
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3 mt-4"><i class="bi bi-receipt me-2 text-primary"></i>Financials</h6>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Distance-Based Fare ({{ number_format($booking->distance / 1000, 1) }} km):</span>
-                        <span>₱{{ number_format($booking->total_price, 2) }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-2 border-bottom pb-2">
-                        <span>Cost per Passenger:</span>
-                        <span>₱{{ number_format($booking->head_price, 2) }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between text-dark fw-medium mb-1" style="font-size: 13px;">
-                        <span>Total Gross Cost:</span>
-                        <span>₱{{ number_format($booking->total_price, 2) }}</span>
-                    </div>
                     <div class="d-flex justify-content-between text-dark fw-medium mb-2 border-bottom pb-2" style="font-size: 13px;">
-                        <span>Amount Paid:</span>
-                        <span class="{{ $booking->amount_paid > 0 ? 'text-success' : 'text-danger' }}">₱{{ number_format($booking->amount_paid, 2) }}</span>
+                        <span>Overall Total:</span>
+                        <span>₱{{ number_format($booking->total_price, 2) }}</span>
                     </div>
                     <div class="d-flex justify-content-between fw-bold text-dark fs-6">
-                        <span>Remaining Balance:</span>
-                        <span class="text-primary">₱{{ number_format($booking->total_price - $booking->amount_paid, 2) }}</span>
+                        <span>25% Payment Amount:</span>
+                        <span class="text-primary">₱{{ number_format($booking->total_price * 0.25, 2) }}</span>
                     </div>
 
                     <div class="mt-3 pt-3 border-top d-none d-xl-block">
