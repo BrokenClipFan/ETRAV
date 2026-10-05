@@ -212,10 +212,10 @@
                             <select name="type" id="selectType" class="form-select rounded-3 form-control-sm"
                                 style="font-size: 13px;" required>
                                 <option value="" disabled selected>Select tag...</option>
-                                <option value="popular">ðŸ”¥ Popular</option>
-                                <option value="best_combo">â­ Best Combo</option>
-                                <option value="trending">âš¡ Trending</option>
-                                <option value="budget">ðŸ’° Budget Friendly</option>
+                                <option value="popular">🔥 Popular</option>
+                                <option value="best_combo">⭐ Best Combo</option>
+                                <option value="trending">⚡ Trending</option>
+                                <option value="budget">💸 Budget Friendly</option>
                             </select>
                         </div>
                     </div>
@@ -235,7 +235,7 @@
                     <div class="mb-4">
                         <label
                             class="form-label text-muted small fw-bold d-flex justify-content-between align-items-center mb-2">
-                            <span>ðŸ“ Attached Itinerary Pipeline</span>
+                            <span>📍 Attached Itinerary Pipeline</span>
                             <span class="badge bg-primary rounded-pill font-monospace" id="spotCountBadge">0</span>
                         </label>
                         <div id="selectedSpotsContainer" class="d-flex flex-column gap-2 p-2 bg-light rounded-3 border"
@@ -955,7 +955,7 @@
         function loadPackageToForm(packageData) {
             activeItinerarySpots = [];
 
-            document.getElementById('formActionHeader').innerText = "ðŸ› ï¸ Edit Package";
+            document.getElementById('formActionHeader').innerText = "📝 Edit Package";
             document.getElementById('formActionSubtext').innerText = "Modifying parameters for: " + packageData.name;
 
             document.getElementById('formPackageId').value = packageData.id;
