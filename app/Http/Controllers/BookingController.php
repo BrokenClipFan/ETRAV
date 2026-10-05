@@ -15,6 +15,7 @@ class BookingController extends Controller
 {
     public function index() {
         $packages = Package::with('places')->get();
+        $categories = \App\Models\Category::all();
         $places = Place::all();
         $user = Auth::user();
         $vehicles = Transport::where('status', 'active')->get();
@@ -25,7 +26,7 @@ class BookingController extends Controller
         
         $hasNotification = Booking::where('user_id', $user->id)->where('notify', true)->exists();
 
-        return view('welcome', compact('packages', 'places', 'user', 'vehicles', 'hasNotification', 'bookedDates'));
+        return view('welcome', compact('packages', 'places', 'user', 'vehicles', 'hasNotification', 'bookedDates', 'categories'));
     }
 
     public function turnOffNotification(int $id) 

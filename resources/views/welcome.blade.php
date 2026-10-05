@@ -537,7 +537,23 @@
             return categoryConfig[key] || { icon: 'bi-geo-alt-fill', bg: '#0d6efd' };
         }
 
+        const categoryIcons = {
+            @foreach($categories as $cat)
+                "{{ strtolower($cat->name) }}": "{{ $cat->icon_path ? asset('storage/' . $cat->icon_path) : '' }}",
+            @endforeach
+        };
+
         function createCategoryPinIcon(categoryKey) {
+            const key = (categoryKey || '').toLowerCase();
+            if (categoryIcons[key]) {
+                return L.icon({
+                    iconUrl: categoryIcons[key],
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36],
+                    popupAnchor: [0, -34]
+                });
+            }
+
             const config = getCategoryDetails(categoryKey);
             return L.divIcon({
                 className: 'custom-pin-wrapper',
