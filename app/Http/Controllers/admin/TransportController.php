@@ -43,7 +43,7 @@ class TransportController extends Controller
         ]);
 
         if(Transport::where('plate_number', $request->plate_number)->exists()){
-            return back()->withErrors('error', 'plate number is already registered');
+            return back()->withErrors(['plate_number' => 'plate number is already registered']);
         }
 
         if($request->hasFile('front_image')) {
@@ -117,6 +117,20 @@ class TransportController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $vehicle = \App\Models\Transport::findOrFail($id);
+        
+        if ($vehicle->front_image_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($vehicle->front_image_path);
+        }
+        if ($vehicle->side_image_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($vehicle->side_image_path);
+        }
+        if ($vehicle->plate_image_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($vehicle->plate_image_path);
+        }
+
+        $vehicle->delete();
+        
+        return redirect()->route('transport.index')->with('success', 'Vehicle removed successfully.');
     }
 }

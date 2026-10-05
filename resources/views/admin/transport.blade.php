@@ -118,7 +118,7 @@
 
                 <div class="input-group input-group-sm mb-3">
                     <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" class="form-control" placeholder="Search vehicle...">
+                    <input type="text" class="form-control" id="vehicleSearchInput" placeholder="Search vehicle...">
                 </div>
 
                 <div class="d-flex flex-column gap-2" id="fleetContainer">
@@ -282,6 +282,7 @@
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary rounded-pill fw-medium shadow-sm"><i
                                 class="bi bi-save me-1"></i> Save Vehicle Data</button>
+                        <button type="button" class="btn btn-outline-danger rounded-pill fw-medium shadow-sm d-none" id="deleteVehicleBtn" onclick="confirmDelete()"><i class="bi bi-trash me-1"></i> Remove Vehicle</button>
                     </div>
                 </form>
             </div>
@@ -348,13 +349,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-4 p-4 shadow-sm border mt-4">
-                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Recent
-                            Maintenance Logs</h6>
-                        <div class="text-center py-3 text-muted small font-italic">
-                            No logs recorded for this vehicle yet.
-                        </div>
-                    </div>
+                    
                 </div>
 
             </div>
@@ -363,6 +358,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         // Image preview logic
         document.querySelectorAll('.img-upload-box input[type="file"]').forEach(input => {
@@ -409,6 +405,10 @@
                 document.getElementById('formHeader').innerHTML =
                     '✨ Register New Vehicle <span class="badge bg-primary text-white ms-2" style="font-size:10px;">Duplicated</span>';
                 document.getElementById('vehicleId').value = '';
+            // Hide Delete button
+            const delBtn = document.getElementById('deleteVehicleBtn');
+            if(delBtn) delBtn.classList.add('d-none');
+
                 toggleImageRequirement(true);
             } else {
                 // Restored back to original data, so back to Edit Mode
@@ -510,21 +510,37 @@
             plateView.innerHTML =
                 `<i class="bi bi-image fs-2 opacity-25"></i><div class="mt-2 small" style="font-size: 11px;">Plate Number Close-up</div>`;
 
-            if (vehicle.front_image_path) {
+if (vehicle.front_image_path) {
                 frontView.innerHTML =
-                    `<img src="${assetBaseUrl}${vehicle.front_image_path}" class="gallery-img w-100 h-100 object-fit-cover">`;
+                    `<img src="${assetBaseUrl}${vehicle.front_image_path}" class="w-100 h-100" style="object-fit: cover;">`;
+                frontView.classList.remove('p-5');
+            } else {
+                frontView.classList.add('p-5');
             }
             if (vehicle.side_image_path) {
                 sideView.innerHTML =
-                    `<img src="${assetBaseUrl}${vehicle.side_image_path}" class="gallery-img w-100 h-100 object-fit-cover">`;
+                    `<img src="${assetBaseUrl}${vehicle.side_image_path}" class="w-100 h-100" style="object-fit: cover;">`;
+                sideView.classList.remove('p-5');
+            } else {
+                sideView.classList.add('p-5');
             }
             if (vehicle.plate_image_path) {
                 plateView.innerHTML =
-                    `<img src="${assetBaseUrl}${vehicle.plate_image_path}" class="gallery-img w-100 h-100 object-fit-cover">`;
+                    `<img src="${assetBaseUrl}${vehicle.plate_image_path}" class="w-100 h-100" style="object-fit: cover;">`;
+                plateView.classList.remove('p-5');
+            } else {
+                plateView.classList.add('p-5');
             }
 
             // Remove upload previews from the form
             document.querySelectorAll('.vehicle-img-preview').forEach(img => img.remove());
+            
+            // Show Delete button
+            const delBtn = document.getElementById('deleteVehicleBtn');
+            if(delBtn) {
+                delBtn.classList.remove('d-none');
+                document.getElementById('deleteVehicleForm').action = defaultAction.replace(/\/$/, '') + '/' + vehicle.id;
+            }
         }
 
         function resetForm() {
@@ -534,6 +550,10 @@
             formElement.action = defaultAction;
             document.getElementById('methodContainer').innerHTML = ''; // Remove PUT method for creating new
             document.getElementById('vehicleId').value = '';
+            // Hide Delete button
+            const delBtn = document.getElementById('deleteVehicleBtn');
+            if(delBtn) delBtn.classList.add('d-none');
+
 
             // Remove image previews
             document.querySelectorAll('.vehicle-img-preview').forEach(img => img.remove());
@@ -546,9 +566,42 @@
             document.getElementById('vehicleProfile').classList.add('d-none');
         }
 
+        
+        // Vehicle Search functionality
+        const searchInput = document.getElementById('vehicleSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+                document.querySelectorAll('.vehicle-item-card').forEach(card => {
+                    const title = card.querySelector('.fw-bold')?.innerText.toLowerCase() || '';
+                    const plate = card.querySelector('.font-monospace')?.innerText.toLowerCase() || '';
+                    
+                    if (title.includes(term) || plate.includes(term)) {
+                        card.classList.remove('d-none');
+                    } else {
+                        card.classList.add('d-none');
+                    }
+                });
+            });
+        }
+
         // Initialize as create mode
         toggleImageRequirement(true);
+    
+        function confirmDelete() {
+            if (confirm('Are you sure you want to remove this vehicle?')) {
+                document.getElementById('deleteVehicleForm').submit();
+            }
+        }
     </script>
+
+
+    <!-- Hidden Delete Form -->
+    <form id="deleteVehicleForm" method="POST" action="" class="d-none">
+        @csrf
+        @method('DELETE')
+    </form>
+
 </body>
 
 </html>
