@@ -15,8 +15,9 @@ class PackageController extends Controller
     public function index() {
         $packages = Package::with('places')->get();
         $allRegisteredSpots = Place::all();
+        $categories = \App\Models\Category::all();
 
-        return view('admin.packages', compact('packages', 'allRegisteredSpots'));
+        return view('admin.packages', compact('packages', 'allRegisteredSpots', 'categories'));
     }
 
     public function store(Request $request) {

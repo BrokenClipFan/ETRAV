@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -185,7 +185,7 @@
 
             <div class="col-12 col-md-4 bg-white border-end h-100 scrollable-panel p-4">
                 <div class="mb-3">
-                    <h5 class="fw-bold text-dark mb-1" id="formActionHeader">✨ Create Package</h5>
+                    <h5 class="fw-bold text-dark mb-1" id="formActionHeader">âœ¨ Create Package</h5>
                     <p class="text-muted small" id="formActionSubtext">Configure parameters and attach global locations
                         below.</p>
                 </div>
@@ -212,10 +212,10 @@
                             <select name="type" id="selectType" class="form-select rounded-3 form-control-sm"
                                 style="font-size: 13px;" required>
                                 <option value="" disabled selected>Select tag...</option>
-                                <option value="popular">🔥 Popular</option>
-                                <option value="best_combo">⭐ Best Combo</option>
-                                <option value="trending">⚡ Trending</option>
-                                <option value="budget">💰 Budget Friendly</option>
+                                <option value="popular">ðŸ”¥ Popular</option>
+                                <option value="best_combo">â­ Best Combo</option>
+                                <option value="trending">âš¡ Trending</option>
+                                <option value="budget">ðŸ’° Budget Friendly</option>
                             </select>
                         </div>
                     </div>
@@ -235,7 +235,7 @@
                     <div class="mb-4">
                         <label
                             class="form-label text-muted small fw-bold d-flex justify-content-between align-items-center mb-2">
-                            <span>📍 Attached Itinerary Pipeline</span>
+                            <span>ðŸ“ Attached Itinerary Pipeline</span>
                             <span class="badge bg-primary rounded-pill font-monospace" id="spotCountBadge">0</span>
                         </label>
                         <div id="selectedSpotsContainer" class="d-flex flex-column gap-2 p-2 bg-light rounded-3 border"
@@ -389,15 +389,7 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label spot-modal-label">Category</label>
-                            <select name="category" id="editSpotCategory" class="form-select spot-modal-input"
-                                required>
-                                <option value="swimming">🏊 Swimming</option>
-                                <option value="mountain">⛰️ Mountain</option>
-                                <option value="restaurant">🍽️ Restaurant</option>
-                                <option value="terminal">🚌 Terminal</option>
-                                <option value="water falls">🌊 Water Falls</option>
-                                <option value="other">📍 Other</option>
-                            </select>
+                            <select name="category" id="editSpotCategory" class="form-select spot-modal-input" required><option value="" disabled>Select category...</option>@foreach($categories as $cat)<option value="{{ $cat->name }}">{{ $cat->name }}</option>@endforeach</select>
                         </div>
                         <div class="mb-2">
                             <label class="form-label spot-modal-label">Location / Address</label>
@@ -405,7 +397,7 @@
                                 class="form-control spot-modal-input">
                         </div>
                         <div class="mb-2">
-                            <label class="form-label spot-modal-label">Entrance Fee (₱)</label>
+                            <label class="form-label spot-modal-label">Entrance Fee (â‚±)</label>
                             <input type="number" name="entrance_fee" id="editSpotFee"
                                 class="form-control spot-modal-input" min="0" required>
                         </div>
@@ -530,7 +522,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 170px;">${spot.name}</h6>
                                 <span class="badge bg-primary-subtle text-primary border px-2 py-1 rounded-pill font-monospace" style="font-size: 11px;">
-                                    ₱${spot.price || spot.entrance_fee || 0}
+                                    â‚±${spot.price || spot.entrance_fee || 0}
                                 </span>
                             </div>
                             
@@ -581,7 +573,7 @@
 
         function openEditSpotModal(spot) {
             document.getElementById('editSpotName').value = spot.name || '';
-            document.getElementById('editSpotCategory').value = (spot.category || '').toLowerCase();
+            document.getElementById('editSpotCategory').value = (spot.category || '');
             document.getElementById('editSpotPlace').value = spot.place || spot.address || '';
             document.getElementById('editSpotFee').value = spot.entrance_fee || spot.price || 0;
             document.getElementById('editSpotDesc').value = spot.description || '';
@@ -655,22 +647,14 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label spot-modal-label">Spot Category</label>
-                        <select id="newSpotCategory" class="form-select spot-modal-input">
-                            <option value="" disabled selected>Select category...</option>
-                            <option value="swimming">🏊 Swimming</option>
-                            <option value="mountain">⛰️ Mountain</option>
-                            <option value="restaurant">🍽️ Restaurant</option>
-                            <option value="terminal">🚌 Terminal</option>
-                            <option value="water falls">🌊 Water Falls</option>
-                            <option value="other">📍 Other</option>
-                        </select>
+                        <select id="newSpotCategory" class="form-select spot-modal-input" required><option value="" disabled selected>Select category...</option>@foreach($categories as $cat)<option value="{{ $cat->name }}">{{ $cat->name }}</option>@endforeach</select>
                     </div>
                     <div class="mb-2">
                         <label class="form-label spot-modal-label">Place / Location Text</label>
                         <input type="text" id="newSpotPlace" class="form-control spot-modal-input" placeholder="Detecting location...">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label spot-modal-label">Entrance Fee (₱)</label>
+                        <label class="form-label spot-modal-label">Entrance Fee (â‚±)</label>
                         <input type="number" id="newSpotFee" class="form-control spot-modal-input" placeholder="0" min="0">
                     </div>
                     <div class="mb-2">
@@ -709,7 +693,7 @@
                 draggable: true
             }).addTo(adminMap);
 
-            temporaryMarker.bindTooltip("🎯 Drag to exact location & release to fill form", {
+            temporaryMarker.bindTooltip("ðŸŽ¯ Drag to exact location & release to fill form", {
                 permanent: true,
                 direction: "top",
                 offset: [0, -32]
@@ -892,7 +876,7 @@
         function loadPackageToForm(packageData) {
             activeItinerarySpots = [];
 
-            document.getElementById('formActionHeader').innerText = "🛠️ Edit Package";
+            document.getElementById('formActionHeader').innerText = "ðŸ› ï¸ Edit Package";
             document.getElementById('formActionSubtext').innerText = "Modifying parameters for: " + packageData.name;
 
             document.getElementById('formPackageId').value = packageData.id;
@@ -972,7 +956,7 @@
             activeItinerarySpots = [];
             renderItineraryViews();
 
-            document.getElementById('formActionHeader').innerText = "✨ Create Package";
+            document.getElementById('formActionHeader').innerText = "âœ¨ Create Package";
             document.getElementById('formActionSubtext').innerText =
                 "Configure parameters and attach global locations below.";
 
@@ -1102,7 +1086,7 @@
                                         draggable: true
                                     }).addTo(adminMap);
                                     
-                                    temporaryMarker.bindTooltip("🖱️ Drag to exact location & release to fill form", {
+                                    temporaryMarker.bindTooltip("ðŸ–±ï¸ Drag to exact location & release to fill form", {
                                         permanent: true,
                                         direction: "top",
                                         offset: [0, -32]
@@ -1140,3 +1124,6 @@
 </body>
 
 </html>
+
+
+

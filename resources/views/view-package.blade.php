@@ -418,30 +418,6 @@
                         </div>
 
                         <div class="bg-light p-3 rounded-3 mb-4 border shadow-sm" style="font-size: 14px;" id="pricingSummaryBox">
-                            <div class="d-flex justify-content-between mb-2 text-dark">
-                                <span><i class="bi bi-info-circle me-1 text-primary"></i> Tour Type:</span>
-                                <span class="fw-medium" id="breakdownBase">Private Tour</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2 text-dark">
-                                <span><i class="bi bi-geo-alt-fill me-1 text-danger"></i> Trip Distance:</span>
-                                <span class="fw-medium" id="breakdownDistance">0.0 km</span>
-                            </div>
-
-                            <div class="border-top border-bottom py-2 my-2 bg-white rounded-3 px-2 shadow-sm" id="priceDetailsContainer">
-                                <span class="fw-bold text-dark d-block mb-1" style="font-size: 13px;"><i class="bi bi-tag-fill text-success me-1"></i> Price Details</span>
-                                <div class="d-flex justify-content-between mt-1 text-muted">
-                                    <span class="ps-2">Trip Fare:</span>
-                                    <span class="fw-medium text-dark" id="breakdownVehicleFare">₱0.00</span>
-                                </div>
-                                <div class="ps-2 text-secondary fst-italic lh-sm mt-1" style="font-size: 11px;" id="breakdownVehicleCalculation">
-                                    (Base rate + Extra distance fee)
-                                </div>
-                            </div>
-
-                            <div class="d-flex justify-content-between mb-2 text-dark mt-2">
-                                <span><i class="bi bi-people-fill me-1 text-primary"></i> Number of People:</span>
-                                <span class="fw-medium" id="breakdownHeads">1 head</span>
-                            </div>
                             <div class="d-flex justify-content-between mb-3 text-primary fw-bold bg-primary-subtle p-2 rounded-2" style="font-size: 13px;">
                                 <span>Per Person:</span>
                                 <span id="breakdownPerPerson">₱0.00 / person</span>
@@ -1630,7 +1606,21 @@
                 headsInput.value = currentPaxLimit;
             }
             
-            const totalBasePrice = vehiclePrice;
+            const activePackageIdForPrice = "{{ $package->id ?? 0 }}";
+            let packagePrice = 0;
+            let isCustomRoute = false;
+            
+            if (packageData[activePackageIdForPrice]) {
+                packagePrice = parseFloat(packageData[activePackageIdForPrice].package_price) || 0;
+                isCustomRoute = packageData[activePackageIdForPrice].spots.some(s => s.isCustom || s.isDurationEdited);
+            }
+            
+            const isBackendCustom = {{ (!isset($package) || (isset($editBooking) && $editBooking->is_custom)) ? 'true' : 'false' }};
+            if (isBackendCustom) {
+                isCustomRoute = true;
+            }
+
+            const totalBasePrice = vehiclePrice + packagePrice;
             const perHeadRate = totalBasePrice / (currentPaxLimit || 1);
 
             let totalToPay = 0;
@@ -1652,15 +1642,13 @@
             if (perHeadLabel) {
                 perHeadLabel.innerText = formatCurrency(perHeadRate);
             }
-            
-            
-            const isCustomRoute = {{ (!isset($package) || (isset($editBooking) && $editBooking->is_custom)) ? 'true' : 'false' }};
             const alertBox = document.getElementById('customQuotationAlert');
             const summaryBox = document.getElementById('pricingSummaryBox');
             const grandTotalBox = document.getElementById('grandTotalBox');
 
             if (isCustomRoute) {
-                document.getElementById('breakdownDistance').innerText = (totalRouteDistance / 1000).toFixed(1) + ' km';
+                const breakdownDistEl = document.getElementById('breakdownDistance');
+                if(breakdownDistEl) breakdownDistEl.innerText = (totalRouteDistance / 1000).toFixed(1) + ' km';
                 document.getElementById('totalDistanceInput').value = totalRouteDistance;
                 
                 if (alertBox) alertBox.style.display = 'block';
@@ -1675,27 +1663,8 @@
             if (summaryBox) summaryBox.style.display = 'block';
             if (grandTotalBox) grandTotalBox.style.display = 'block';
             
-            const priceDetailsContainer = document.getElementById('priceDetailsContainer');
-            if (priceDetailsContainer) priceDetailsContainer.style.display = 'block';
-            
             const distanceKm = (totalRouteDistance / 1000).toFixed(1);
-            document.getElementById('breakdownDistance').innerText = `${distanceKm} km`;
             document.getElementById('totalDistanceInput').value = totalRouteDistance;
-
-            document.getElementById('breakdownVehicleFare').innerText = formatCurrency(vehiclePrice);
-            if (additionalIntervals > 0) {
-                document.getElementById('breakdownVehicleCalculation').innerText = `(Includes ${formatCurrency(baseVehiclePrice)} base rate + ${formatCurrency(intervalRate)} × ${additionalIntervals} extra distance charges)`;
-            } else {
-                document.getElementById('breakdownVehicleCalculation').innerText = `(Base rate only, no extra distance charges)`;
-            }
-
-            document.getElementById('breakdownBase').innerText = isJoinerAllowed ?
-                `Joiner / Open Group (${headsCount} of ${currentPaxLimit} slots)` :
-                'Private / Exclusive Group';
-
-            document.getElementById('breakdownHeads').innerText = isJoinerAllowed ?
-                `${headsCount} people (@ ${formatCurrency(perHeadRate)} each)` :
-                `${headsCount} people (splitting the total)`;
 
             document.getElementById('breakdownPerPerson').innerText = `${formatCurrency(costPerPerson)} / person`;
             document.getElementById('modalTotalPrice').innerText = formatCurrency(totalToPay);
