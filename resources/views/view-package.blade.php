@@ -831,6 +831,12 @@
             }
         };
 
+                const categoryIcons = {
+            @foreach($categories ?? [] as $cat)
+                "{{ strtolower($cat->name) }}": "{{ $cat->icon_path ? asset('storage/' . $cat->icon_path) : '' }}",
+            @endforeach
+        };
+
         function getCategoryDetails(categoryKey) {
             const key = (categoryKey || '').toLowerCase();
             return categoryConfig[key] || {
@@ -848,6 +854,17 @@
                     popupAnchor: [0, -34]
                 });
             }
+            
+            const catName = (spot && spot.category) ? spot.category.toLowerCase() : '';
+            if (categoryIcons[catName]) {
+                return L.icon({
+                    iconUrl: categoryIcons[catName],
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36],
+                    popupAnchor: [0, -34]
+                });
+            }
+            
             const config = getCategoryDetails(spot ? spot.category : '');
             return L.divIcon({
                 className: 'custom-pin-wrapper',
@@ -868,6 +885,18 @@
                     popupAnchor: [0, -34]
                 });
             }
+            
+            const catName = (spot && spot.category) ? spot.category.toLowerCase() : '';
+            if (categoryIcons[catName]) {
+                return L.icon({
+                    iconUrl: categoryIcons[catName],
+                    className: 'opacity-75',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36],
+                    popupAnchor: [0, -34]
+                });
+            }
+            
             const config = getCategoryDetails(spot ? spot.category : '');
             return L.divIcon({
                 className: 'custom-pin-wrapper',
