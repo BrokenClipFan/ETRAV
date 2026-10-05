@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -185,7 +185,7 @@
 
             <div class="col-12 col-md-4 bg-white border-end h-100 scrollable-panel p-4">
                 <div class="mb-3">
-                    <h5 class="fw-bold text-dark mb-1" id="formActionHeader">âœ¨ Create Package</h5>
+                    <h5 class="fw-bold text-dark mb-1" id="formActionHeader">✨ Create Package</h5>
                     <p class="text-muted small" id="formActionSubtext">Configure parameters and attach global locations
                         below.</p>
                 </div>
@@ -397,7 +397,7 @@
                                 class="form-control spot-modal-input">
                         </div>
                         <div class="mb-2">
-                            <label class="form-label spot-modal-label">Entrance Fee (â‚±)</label>
+                            <label class="form-label spot-modal-label">Entrance Fee (₱)</label>
                             <input type="number" name="entrance_fee" id="editSpotFee"
                                 class="form-control spot-modal-input" min="0" required>
                         </div>
@@ -474,7 +474,23 @@
             };
         }
 
+        const categoryIcons = {
+            @foreach($categories as $cat)
+                "{{ strtolower($cat->name) }}": "{{ $cat->icon_path ? asset('storage/' . $cat->icon_path) : '' }}",
+            @endforeach
+        };
+
         function createCategoryPinIcon(categoryKey) {
+            const key = (categoryKey || '').toLowerCase();
+            if (categoryIcons[key]) {
+                return L.icon({
+                    iconUrl: categoryIcons[key],
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36],
+                    popupAnchor: [0, -34]
+                });
+            }
+
             const config = getCategoryDetails(categoryKey);
             return L.divIcon({
                 className: 'custom-pin-wrapper',
@@ -522,7 +538,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 170px;">${spot.name}</h6>
                                 <span class="badge bg-primary-subtle text-primary border px-2 py-1 rounded-pill font-monospace" style="font-size: 11px;">
-                                    â‚±${spot.price || spot.entrance_fee || 0}
+                                    ₱${spot.price || spot.entrance_fee || 0}
                                 </span>
                             </div>
                             
@@ -654,7 +670,7 @@
                         <input type="text" id="newSpotPlace" class="form-control spot-modal-input" placeholder="Detecting location...">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label spot-modal-label">Entrance Fee (â‚±)</label>
+                        <label class="form-label spot-modal-label">Entrance Fee (₱)</label>
                         <input type="number" id="newSpotFee" class="form-control spot-modal-input" placeholder="0" min="0">
                     </div>
                     <div class="mb-2">
@@ -693,7 +709,7 @@
                 draggable: true
             }).addTo(adminMap);
 
-            temporaryMarker.bindTooltip("ðŸŽ¯ Drag to exact location & release to fill form", {
+            temporaryMarker.bindTooltip("Drag to exact location & release to fill form", {
                 permanent: true,
                 direction: "top",
                 offset: [0, -32]
@@ -956,7 +972,7 @@
             activeItinerarySpots = [];
             renderItineraryViews();
 
-            document.getElementById('formActionHeader').innerText = "âœ¨ Create Package";
+            document.getElementById('formActionHeader').innerText = "✨ Create Package";
             document.getElementById('formActionSubtext').innerText =
                 "Configure parameters and attach global locations below.";
 
@@ -1086,7 +1102,7 @@
                                         draggable: true
                                     }).addTo(adminMap);
                                     
-                                    temporaryMarker.bindTooltip("ðŸ–±ï¸ Drag to exact location & release to fill form", {
+                                    temporaryMarker.bindTooltip("Drag to exact location & release to fill form", {
                                         permanent: true,
                                         direction: "top",
                                         offset: [0, -32]
